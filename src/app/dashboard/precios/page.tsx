@@ -27,7 +27,6 @@ export default async function PreciosPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Cargamos productos globales y personalizados del usuario
   const [{ data: products }, { data: userPrices }] = await Promise.all([
     supabase
       .from("products")
@@ -51,37 +50,32 @@ export default async function PreciosPage() {
   })).filter(g => g.products.length > 0);
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 pb-24">
-      <div className="mb-8">
-        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-          Catálogo y <span className="text-[#F97316]">Mis Precios</span>
+    <div className="max-w-2xl mx-auto pb-24 bg-gray-50 min-h-screen">
+      {/* Header Fijo o Prominente */}
+      <div className="bg-white p-6 border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+        <h1 className="text-xl font-black text-gray-900">
+          Catálogo y <span className="text-[#F97316]">Precios</span>
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Personaliza tus precios de venta. El sistema usará estos valores en tus cotizaciones automáticamente.
+        <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-1">
+          Ajusta tus márgenes de ganancia
         </p>
       </div>
 
-      <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-8 flex items-start gap-3">
-        <span className="text-lg">💡</span>
-        <p className="text-xs text-orange-800 leading-relaxed">
-          Los clientes **nunca** verán tus precios unitarios ni el costo base. Solo verán el total final de la cotización.
-        </p>
-      </div>
-
-      <div className="space-y-10">
+      <div className="p-4">
         {grouped.map(({ cat, label, products: prods }) => (
-          <div key={cat}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-6 w-1 bg-[#F97316] rounded-full" />
-              <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
+          <div key={cat} className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Cabecera de Categoría */}
+            <div className="bg-gray-50/50 px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-xs font-black uppercase tracking-widest text-gray-400">
                 {label}
               </h2>
-              <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
-                {prods.length} ítems
+              <span className="text-[10px] font-bold text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+                {prods.length}
               </span>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Lista de Productos */}
+            <div className="divide-y divide-gray-50">
               {prods.map(product => (
                 <PriceCard 
                   key={product.id} 
@@ -92,6 +86,11 @@ export default async function PreciosPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Flotante de Ayuda Mobile */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap z-20">
+        <span className="text-[#F97316]">💡</span> Los precios se guardan al salir del campo
       </div>
     </div>
   );

@@ -12,6 +12,16 @@ interface Product {
   unit_label: string | null;
 }
 
+const CAT_ICONS: Record<string, string> = {
+  puerta: "🚪",
+  ventana: "🪟",
+  screen: "🛡️",
+  screen_ac: "❄️",
+  closet: "👔",
+  garaje: "🚗",
+  miscelanea: "🛠️"
+};
+
 export function PriceCard({ 
   product, 
   currentPrice 
@@ -36,67 +46,53 @@ export function PriceCard({
       setHasChanged(false);
     } catch (error) {
       console.error("Error al guardar precio:", error);
-      alert("Error al guardar el precio");
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-[#F97316] uppercase tracking-wider mb-1">
-            {product.code || "S/C"}
+    <div className="flex items-center gap-3 bg-white border-b border-gray-100 p-3 hover:bg-orange-50/30 transition-colors">
+      {/* Icono de Categoría Compacto */}
+      <div className="flex-shrink-0 w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-xl shadow-sm border border-gray-100">
+        {CAT_ICONS[product.category] || "📦"}
+      </div>
+
+      {/* Información del Producto - Prominente */}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-bold text-gray-900 truncate leading-tight">
+          {product.name}
+        </h3>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-[10px] font-bold text-[#F97316] bg-orange-50 px-1.5 py-0.5 rounded uppercase">
+            {product.code}
           </span>
-          <h3 className="text-sm font-semibold text-gray-800 leading-tight">
-            {product.name}
-          </h3>
-        </div>
-        <div className="bg-gray-50 px-2 py-1 rounded-md">
           <span className="text-[10px] text-gray-400 font-medium">
-            {product.price_type.replace(/_/g, " ")}
+            x {product.unit_label || "u"}
           </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mt-4">
-        <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-          <input
-            type="number"
-            step="0.01"
-            value={price}
-            onChange={(e) => {
-              setPrice(e.target.value);
-              setHasChanged(true);
-            }}
-            onBlur={handleBlur}
-            className={`w-full pl-7 pr-4 py-2 bg-gray-50 border ${
-              hasChanged ? "border-orange-200" : "border-transparent"
-            } rounded-xl text-sm font-bold text-gray-700 focus:bg-white focus:border-[#F97316] focus:ring-2 focus:ring-orange-100 outline-none transition-all`}
-            placeholder="0.00"
-          />
-        </div>
-        
-        <div className="flex flex-col items-end min-w-[80px]">
-          {isSaving ? (
-            <span className="text-[10px] text-[#F97316] font-bold animate-pulse">
-              GUARDANDO...
-            </span>
-          ) : hasChanged ? (
-            <span className="text-[10px] text-gray-400 font-medium">
-              PENDIENTE
-            </span>
-          ) : (
-            <span className="text-[10px] text-green-500 font-bold flex items-center gap-1">
-              ✓ GUARDADO
-            </span>
-          )}
-          <span className="text-[9px] text-gray-400 uppercase mt-1">
-            Precio x {product.unit_label || "u"}
-          </span>
-        </div>
+      {/* Input de Precio - Optimizado para Pulgar */}
+      <div className="relative w-28">
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">$</span>
+        <input
+          type="number"
+          step="0.01"
+          value={price}
+          onChange={(e) => {
+            setPrice(e.target.value);
+            setHasChanged(true);
+          }}
+          onBlur={handleBlur}
+          className={`w-full pl-6 pr-2 py-2.5 bg-gray-50 border-2 ${
+            hasChanged ? "border-orange-300 bg-white" : "border-transparent"
+          } rounded-xl text-sm font-black text-gray-800 text-right focus:bg-white focus:border-[#F97316] outline-none transition-all shadow-inner`}
+          placeholder="0.00"
+        />
+        {isSaving && (
+          <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#F97316] rounded-full animate-ping" />
+        )}
       </div>
     </div>
   );
