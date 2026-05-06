@@ -36,11 +36,11 @@ export function QuickCalculator({ product, userPrice, onAddToQuote }: QuickCalcu
 
         if (width > 0 && height > 0) {
           const total = calcLineTotal({
-            width_inches: width,
-            height_inches: height,
-            price: userPrice,
+            widthInches: width,
+            heightInches: height,
+            unitPrice: userPrice,
             quantity: qty,
-            price_type: product.price_type,
+            priceType: product.price_type as "por_unidad" | "por_pie_cuadrado" | "por_pie_lineal",
           });
           setLineTotal(total);
         } else {
