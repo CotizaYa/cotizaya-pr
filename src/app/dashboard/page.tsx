@@ -28,8 +28,8 @@ export default async function DashboardPage() {
   const totalVentasMes = ventasMes.reduce((s:number, q:any) => s + Number(q.total), 0);
 
   const stats = [
-    { label:"Pendiente de cobro", value:formatUSD(pendientes.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${pendientes.length} activas`, color:"#2563eb", icon:"⏳" },
-    { label:"IVU recolectado", value:formatUSD(ventasMes.reduce((s:number,q:any)=>s+(Number(q.total)*0.115/1.115),0)), sub:"11.5% este mes", color:"#7c3aed", icon:"💰" },
+    { label:"Pendiente de cobro", value:formatUSD(pendientes.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${pendientes.length} activas`, color:"#2563eb" },
+    { label:"IVU recolectado", value:formatUSD(ventasMes.reduce((s:number,q:any)=>s+(Number(q.total)*0.115/1.115),0)), sub:"11.5% este mes", color:"#7c3aed" },
   ];
 
   return (
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Link href="/dashboard/cotizaciones/nueva" className="inline-flex items-center gap-2 bg-gradient-to-r from-[#f97316] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-95">
-            <span className="text-xl">✚</span> Nueva Cotización
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg> Nueva Cotización
           </Link>
         </div>
       </div>
@@ -85,7 +85,9 @@ export default async function DashboardPage() {
               />
               
               {/* Icon */}
-              <div className="text-3xl mb-4">{s.icon}</div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${s.color}15` }}>
+                <svg className="w-5 h-5" style={{ color: s.color }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
               
               {/* Content */}
               <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{s.label}</p>
@@ -108,7 +110,7 @@ export default async function DashboardPage() {
           {/* Content */}
           {all.length === 0 ? (
             <div className="py-16 px-6 text-center">
-              <div className="text-5xl mb-4">📋</div>
+              <svg className="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
               <p className="text-slate-600 font-medium mb-4">Aún no tienes cotizaciones</p>
               <Link href="/dashboard/cotizaciones/nueva" className="inline-block text-sm font-bold text-[#f97316] hover:text-orange-600">
                 Crear la primera →

@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const LABEL: Record<string, string> = {
-  draft: "🟡 Pendiente",
-  sent: "🟡 Pendiente",
-  viewed: "🟡 Pendiente",
-  accepted: "🟢 Confirmada",
+  draft: "Pendiente",
+  sent: "Pendiente",
+  viewed: "Pendiente",
+  accepted: "Confirmada",
   rejected: "Rechazada",
   expired: "Expirada",
 };
@@ -119,9 +119,9 @@ export default function CotizacionesPage() {
         </div>
         <Link
           href="/dashboard/cotizaciones/nueva"
-          className="bg-[#f97316] text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all"
+          className="bg-[#f97316] text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all inline-flex items-center gap-2"
         >
-          ✚ Nueva
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg> Nueva
         </Link>
       </div>
 
@@ -150,7 +150,7 @@ export default function CotizacionesPage() {
       {/* Lista de cotizaciones */}
       {quotes.length === 0 ? (
         <div className="bg-white border border-slate-100 rounded-2xl py-16 text-center">
-          <p className="text-4xl mb-3">📋</p>
+          <svg className="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           <p className="text-sm text-slate-500">No hay cotizaciones aún</p>
           <Link
             href="/dashboard/cotizaciones/nueva"
@@ -204,13 +204,15 @@ export default function CotizacionesPage() {
                       <span className="animate-pulse">...</span>
                     ) : (
                       <>
-                        ✅ Marcar como Confirmada
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" /></svg>
+                        Marcar como Confirmada
                       </>
                     )}
                   </button>
                 ) : q.status === "accepted" ? (
-                  <span className="text-xs font-bold text-green-600">
-                    🟢 Confirmada
+                  <span className="flex items-center gap-1 text-xs font-bold text-green-600">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#16a34a" /><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white" /></svg>
+                    Confirmada
                   </span>
                 ) : null}
               </div>
