@@ -1,17 +1,16 @@
 "use client";
 import { useState, ReactNode } from "react";
+import { DashboardNav } from "@/components/dashboard/DashboardNav";
 import { MobileHeader } from "@/components/navigation/MobileHeader";
 import { MobileNav } from "@/components/navigation/MobileNav";
 
 interface DashboardLayoutClientProps {
   businessName: string;
-  sidebarNav: ReactNode;
   children: ReactNode;
 }
 
 export function DashboardLayoutClient({ 
   businessName, 
-  sidebarNav,
   children 
 }: DashboardLayoutClientProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,7 +19,7 @@ export function DashboardLayoutClient({
     <div className="flex h-screen bg-[#fafafa] overflow-hidden">
       {/* DESKTOP: Sidebar fijo a la izquierda */}
       <aside className="hidden md:flex h-full border-r border-gray-100 flex-shrink-0">
-        {sidebarNav}
+        <DashboardNav businessName={businessName} />
       </aside>
 
       {/* MOBILE: Overlay del Sidebar */}
@@ -35,11 +34,11 @@ export function DashboardLayoutClient({
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {sidebarNav}
+        <DashboardNav businessName={businessName} />
       </div>
 
       {/* Contenedor Principal */}
-      <main className="w-full flex flex-col min-w-0 overflow-hidden md:ml-64">
+      <main className="w-full flex flex-col min-w-0 overflow-hidden">
         {/* MOBILE: Header con hamburguesa */}
         <MobileHeader
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
