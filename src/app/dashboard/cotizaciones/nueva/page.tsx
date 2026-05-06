@@ -173,16 +173,38 @@ export default function NuevaCotizacionPage() {
   if (!selectedProduct) {
     return (
       <div className="pb-32">
-        {/* Header Premium */}
-        <div className="px-5 pt-8 pb-6 border-b border-gray-100 sticky top-0 bg-white/80 backdrop-blur-md z-10">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Nueva Cotización</h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">
-            Construye una oferta profesional en segundos
-          </p>
+        {/* Header compacto */}
+        <div className="px-4 pt-4 pb-3 border-b border-gray-100 sticky top-12 md:top-0 bg-white/95 backdrop-blur-md z-10">
+          <h1 className="text-xl font-black text-gray-900 tracking-tight">Nueva Cotización</h1>
         </div>
 
-        {/* Contenido Premium */}
-        <div className="px-5 py-6">
+        {/* Lista de productos compacta */}
+        <div className="px-4 py-3">
+          {/* Lista simple con iconos por categoría */}
+          {Object.entries(groupedProducts).map(([cat, catProducts]) => (
+            <div key={cat} className="mb-4">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span className="text-base">{CATEGORY_ICONS[cat] || '📦'}</span>
+                {cat}
+              </p>
+              <div className="space-y-1">
+                {catProducts.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedProduct(p)}
+                    className="w-full flex items-center justify-between px-3 py-3 bg-gray-50 rounded-xl active:scale-[0.98] active:bg-orange-50 transition-all"
+                  >
+                    <span className="font-semibold text-sm text-[#0F172A] text-left">{p.name}</span>
+                    <span className="text-xs font-bold text-[#F97316] whitespace-nowrap ml-2">
+                      {formatUSD(userPrices[p.id] ?? p.base_price)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          {/* Grid Premium (oculto en móvil, visible en desktop) */}
+          <div className="hidden md:block">
           <PremiumProductGrid
             products={products.map(p => ({
               code: p.code || "",
@@ -197,6 +219,7 @@ export default function NuevaCotizacionPage() {
             }}
             groupByCategory={true}
           />
+          </div>
         </div>
 
         {/* Lista de Ítems Agregados (Flotante) */}

@@ -105,10 +105,12 @@ export function QuickCalculator({ product, userPrice, onAddToQuote }: QuickCalcu
               </label>
               <input
                 type="text"
+                inputMode="decimal"
                 value={widthInput}
                 onChange={(e) => setWidthInput(e.target.value)}
                 placeholder="36 1/2"
-                className="w-full h-16 px-4 text-2xl font-bold bg-gray-50 border-2 border-gray-200 rounded-2xl focus:border-[#F97316] focus:bg-white outline-none transition-all shadow-md"
+                autoFocus
+                className="w-full h-14 px-4 text-2xl font-bold bg-gray-50 border-2 border-gray-200 rounded-2xl focus:border-[#F97316] focus:bg-white outline-none transition-all"
               />
             </div>
 
@@ -119,10 +121,11 @@ export function QuickCalculator({ product, userPrice, onAddToQuote }: QuickCalcu
               </label>
               <input
                 type="text"
+                inputMode="decimal"
                 value={heightInput}
                 onChange={(e) => setHeightInput(e.target.value)}
                 placeholder="48 1/4"
-                className="w-full h-16 px-4 text-2xl font-bold bg-gray-50 border-2 border-gray-200 rounded-2xl focus:border-[#F97316] focus:bg-white outline-none transition-all shadow-md"
+                className="w-full h-14 px-4 text-2xl font-bold bg-gray-50 border-2 border-gray-200 rounded-2xl focus:border-[#F97316] focus:bg-white outline-none transition-all"
               />
             </div>
 
