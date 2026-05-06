@@ -60,9 +60,9 @@ export default async function CotizacionPublicaPage({ params }: PageProps) {
   const statusInfo = STATUS_LABEL[quote.status] ?? STATUS_LABEL.sent
   const ivu_pct = Math.round(Number(quote.ivu_rate ?? 0.115) * 100)
 
-  // WhatsApp — siempre visible para cierre de venta
+  // WhatsApp — mensaje de cierre automático
   const waMsg = encodeURIComponent(
-    `Hola ${contratista?.business_name ?? 'CotizaYa'}, vi la cotización ${quote.quote_number} por ${fmt(quote.total)} y me interesa proceder.`
+    `Hola ${contratista?.business_name ?? 'CotizaYa'},\n\nQuiero confirmar esta cotización:\n\n${quote.quote_number}\nTotal: ${fmt(quote.total)}\n\nDirección de instalación:\n[Escribe aquí]\n\n¿Cuándo pueden comenzar?`
   )
   const rawPhone = contratista?.phone?.replace(/\D/g, '') || ''
   const waUrl = rawPhone
@@ -80,7 +80,14 @@ export default async function CotizacionPublicaPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* ── HEADER ─────────────────────────────────────────── */}
+      {/* ── BANNER SUPERIOR ────────────────────────────────────── */}
+      <div className="bg-green-50 border-b border-green-200 px-6 py-3 text-center">
+        <p className="text-green-800 font-bold text-sm">
+          ✅ Cotización lista para instalación
+        </p>
+      </div>
+
+      {/* ── HEADER ───────────────────────────────────────────── */}
       <div className="bg-[#0F172A] px-6 pt-10 pb-7">
         <div className="flex items-start justify-between mb-5">
           <div>
@@ -211,22 +218,15 @@ export default async function CotizacionPublicaPage({ params }: PageProps) {
             <span className="tabular-nums font-medium">{fmt(quote.ivu_amount)}</span>
           </div>
 
-          {/* TOTAL */}
-          <div className="flex justify-between items-baseline border-t border-white/20 pt-4">
-            <span className="text-white font-black text-xl">TOTAL</span>
-            <span className="text-[#F97316] font-black text-4xl tabular-nums">
+          {/* TOTAL — dominante */}
+          <div className="flex justify-between items-baseline border-t border-white/20 pt-5">
+            <span className="text-white font-black text-lg">TOTAL</span>
+            <span className="text-[#F97316] font-black text-5xl tabular-nums">
               {fmt(quote.total)}
             </span>
           </div>
 
-          {Number(quote.deposit_amount) > 0 && (
-            <div className="flex justify-between text-sm text-gray-400 border-t border-white/10 pt-3">
-              <span>Depósito requerido (50%)</span>
-              <span className="tabular-nums font-bold text-white">
-                {fmt(quote.deposit_amount)}
-              </span>
-            </div>
-          )}
+
         </div>
       </div>
 
