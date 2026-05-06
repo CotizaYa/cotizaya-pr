@@ -4,8 +4,8 @@ import Link from "next/link";
 import { formatUSD } from "@/lib/calculations";
 
 const STATUS_LABEL: Record<string,string> = { draft:"Borrador", sent:"Enviada", viewed:"Vista", accepted:"Aprobada", rejected:"Rechazada", expired:"Expirada" };
-const STATUS_COLOR: Record<string,string> = { draft:"#e5e5e5", sent:"#dbeafe", viewed:"#fef9c3", accepted:"#dcfce7", rejected:"#fee2e2", expired:"#e5e5e5" };
-const STATUS_TEXT: Record<string,string>  = { draft:"#525252", sent:"#1d4ed8", viewed:"#854d0e", accepted:"#15803d", rejected:"#dc2626", expired:"#737373" };
+const STATUS_COLOR: Record<string,string> = { draft:"#f3f4f6", sent:"#dbeafe", viewed:"#fef9c3", accepted:"#dcfce7", rejected:"#fee2e2", expired:"#f3f4f6" };
+const STATUS_TEXT: Record<string,string>  = { draft:"#6b7280", sent:"#1d4ed8", viewed:"#854d0e", accepted:"#15803d", rejected:"#dc2626", expired:"#6b7280" };
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -24,66 +24,107 @@ export default async function DashboardPage() {
   const pendientes = all.filter((q:any) => ["draft","sent","viewed"].includes(q.status));
 
   const stats = [
-    { label:"Facturado este mes", value:formatUSD(thisMonth.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${thisMonth.length} cotizaciones`, color:"#f97316" },
-    { label:"Cobrado (aprobadas)", value:formatUSD(aprobadas.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${aprobadas.length} aprobadas`, color:"#16a34a" },
-    { label:"Pendiente de cobro", value:formatUSD(pendientes.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${pendientes.length} activas`, color:"#2563eb" },
-    { label:"IVU recolectado", value:formatUSD(thisMonth.reduce((s:number,q:any)=>s+(Number(q.total)*0.115/1.115),0)), sub:"11.5% este mes", color:"#7c3aed" },
+    { label:"Facturado este mes", value:formatUSD(thisMonth.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${thisMonth.length} cotizaciones`, color:"#f97316", icon:"📊" },
+    { label:"Cobrado (aprobadas)", value:formatUSD(aprobadas.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${aprobadas.length} aprobadas`, color:"#16a34a", icon:"✓" },
+    { label:"Pendiente de cobro", value:formatUSD(pendientes.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${pendientes.length} activas`, color:"#2563eb", icon:"⏳" },
+    { label:"IVU recolectado", value:formatUSD(thisMonth.reduce((s:number,q:any)=>s+(Number(q.total)*0.115/1.115),0)), sub:"11.5% este mes", color:"#7c3aed", icon:"💰" },
   ];
 
   return (
-    <div style={{ padding:"24px", maxWidth:"900px", margin:"0 auto" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"20px" }}>
-        <div>
-          <h1 style={{ margin:0, fontSize:"20px", fontWeight:700, color:"#171717" }}>Inicio</h1>
-          <p style={{ margin:"2px 0 0", fontSize:"13px", color:"#737373" }}>
-            {now.toLocaleDateString("es-PR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 pb-24">
+      {/* Header Premium */}
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900">Dashboard</h1>
+            <p className="text-sm text-slate-500 font-medium mt-1">
+              {now.toLocaleDateString("es-PR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
+            </p>
+          </div>
+          <Link href="/dashboard/cotizaciones/nueva" className="inline-flex items-center gap-2 bg-gradient-to-r from-[#f97316] to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-95">
+            <span className="text-xl">✚</span> Nueva Cotización
+          </Link>
         </div>
-        <Link href="/dashboard/cotizaciones/nueva" style={{ background:"#f97316", color:"white", textDecoration:"none", borderRadius:"12px", padding:"8px 16px", fontSize:"13px", fontWeight:700 }}>
-          ✚ Nueva Cotización
-        </Link>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"12px", marginBottom:"20px" }}>
-        {stats.map(s => (
-          <div key={s.label} style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", padding:"14px" }}>
-            <p style={{ margin:0, fontSize:"11px", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", color:"#737373" }}>{s.label}</p>
-            <p style={{ margin:"4px 0 2px", fontSize:"22px", fontWeight:700, color:s.color }}>{s.value}</p>
-            <p style={{ margin:0, fontSize:"11px", color:"#a3a3a3" }}>{s.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", overflow:"hidden" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 20px", borderBottom:"1px solid #f5f5f5" }}>
-          <span style={{ fontSize:"13px", fontWeight:600, color:"#404040" }}>Cotizaciones Recientes</span>
-          <Link href="/dashboard/cotizaciones" style={{ fontSize:"12px", color:"#f97316", textDecoration:"none", fontWeight:600 }}>Ver todas →</Link>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats Grid - Premium Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map(s => (
+            <div 
+              key={s.label} 
+              className="group relative bg-white rounded-2xl border border-slate-100 hover:border-slate-200 p-6 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+            >
+              {/* Gradient Background */}
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity"
+                style={{ background: s.color }}
+              />
+              
+              {/* Icon */}
+              <div className="text-3xl mb-4">{s.icon}</div>
+              
+              {/* Content */}
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{s.label}</p>
+              <p className="text-3xl font-black mb-1" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-xs text-slate-400 font-medium">{s.sub}</p>
+            </div>
+          ))}
         </div>
-        {all.length === 0 ? (
-          <div style={{ padding:"40px", textAlign:"center" }}>
-            <p style={{ margin:"0 0 8px", fontSize:"13px", color:"#737373" }}>Aún no tienes cotizaciones.</p>
-            <Link href="/dashboard/cotizaciones/nueva" style={{ fontSize:"13px", color:"#f97316", fontWeight:700 }}>Crear la primera →</Link>
+
+        {/* Recent Quotes Section */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+            <h2 className="text-lg font-bold text-slate-900">Cotizaciones Recientes</h2>
+            <Link href="/dashboard/cotizaciones" className="text-sm font-bold text-[#f97316] hover:text-orange-600 transition-colors">
+              Ver todas →
+            </Link>
           </div>
-        ) : (
-          <ul style={{ margin:0, padding:0, listStyle:"none" }}>
-            {all.map((q:any) => (
-              <li key={q.id} style={{ borderBottom:"1px solid #fafafa" }}>
-                <Link href={`/dashboard/cotizaciones/${q.id}`} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 20px", textDecoration:"none", transition:"background 0.1s" }}>
-                  <div>
-                    <span style={{ fontSize:"13px", fontWeight:500, color:"#171717" }}>{(q as any).clients?.full_name ?? "Sin cliente"}</span>
-                    <span style={{ marginLeft:"8px", fontSize:"11px", color:"#a3a3a3" }}>#{q.quote_number} · {new Date(q.created_at).toLocaleDateString("es-PR")}</span>
+
+          {/* Content */}
+          {all.length === 0 ? (
+            <div className="py-16 px-6 text-center">
+              <div className="text-5xl mb-4">📋</div>
+              <p className="text-slate-600 font-medium mb-4">Aún no tienes cotizaciones</p>
+              <Link href="/dashboard/cotizaciones/nueva" className="inline-block text-sm font-bold text-[#f97316] hover:text-orange-600">
+                Crear la primera →
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {all.map((q:any) => (
+                <Link 
+                  key={q.id}
+                  href={`/dashboard/cotizaciones/${q.id}`} 
+                  className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-900 group-hover:text-[#f97316] transition-colors">
+                      {(q as any).clients?.full_name ?? "Sin cliente"}
+                    </p>
+                    <p className="text-xs text-slate-500 font-medium mt-1">
+                      #{q.quote_number} · {new Date(q.created_at).toLocaleDateString("es-PR")}
+                    </p>
                   </div>
-                  <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                    <span style={{ background:STATUS_COLOR[q.status], color:STATUS_TEXT[q.status], borderRadius:"999px", padding:"2px 8px", fontSize:"10px", fontWeight:700 }}>
+                  <div className="flex items-center gap-4 ml-4">
+                    <span 
+                      className="px-3 py-1 rounded-full text-xs font-bold transition-all"
+                      style={{ 
+                        background: STATUS_COLOR[q.status], 
+                        color: STATUS_TEXT[q.status]
+                      }}
+                    >
                       {STATUS_LABEL[q.status]}
                     </span>
-                    <span style={{ fontSize:"13px", fontWeight:700, color:"#171717" }}>{formatUSD(q.total)}</span>
+                    <span className="text-sm font-black text-slate-900 min-w-fit">{formatUSD(q.total)}</span>
                   </div>
                 </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
