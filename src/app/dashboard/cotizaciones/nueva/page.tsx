@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { QuickCalculator } from "@/components/quote-builder/QuickCalculator";
-import { PremiumProductGrid } from "@/components/quote/PremiumProductGrid";
 import { formatUSD } from "@/lib/calculations";
 
 interface Product {
@@ -29,14 +28,36 @@ interface QuoteItem {
   line_total: number;
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
+const CAT_ORDER = ["puerta", "ventana", "screen", "screen_ac", "closet", "garaje", "miscelanea"];
+
+const CAT_LABEL: Record<string, string> = {
+  puerta: "Puertas",
+  ventana: "Ventanas",
+  screen: "Screens",
+  screen_ac: "Screen A/C",
+  closet: "Closets",
+  garaje: "Garaje",
+  miscelanea: "Servicios",
+};
+
+const CAT_ICONS: Record<string, string> = {
   puerta: "🚪",
   ventana: "🪟",
   screen: "🛡️",
   screen_ac: "❄️",
-  closet: "📦",
+  closet: "👔",
   garaje: "🚗",
   miscelanea: "🔧",
+};
+
+const CAT_COLORS: Record<string, string> = {
+  puerta: "from-blue-500 to-blue-600",
+  ventana: "from-cyan-500 to-cyan-600",
+  screen: "from-teal-500 to-teal-600",
+  screen_ac: "from-indigo-500 to-indigo-600",
+  closet: "from-purple-500 to-purple-600",
+  garaje: "from-slate-600 to-slate-700",
+  miscelanea: "from-orange-500 to-orange-600",
 };
 
 export default function NuevaCotizacionPage() {
@@ -49,8 +70,8 @@ export default function NuevaCotizacionPage() {
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // ── CARGAR DATOS INICIALES ──
   useEffect(() => {
     const loadData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -71,8 +92,6 @@ export default function NuevaCotizacionPage() {
       ]);
 
       setProducts(productsRes.data ?? []);
-
-      // Crear mapa de precios personalizados
       const priceMap: Record<string, number> = {};
       (pricesRes.data ?? []).forEach(({ product_id, price }) => {
         priceMap[product_id] = price;
@@ -84,36 +103,40 @@ export default function NuevaCotizacionPage() {
     loadData();
   }, []);
 
-  // ── AGRUPAR PRODUCTOS POR CATEGORÍA ──
-  const groupedProducts = products.reduce((acc, product) => {
-    const cat = product.category;
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(product);
-    return acc;
-  }, {} as Record<string, Product[]>);
+  // ── Filtrar y agrupar productos ──
+  const filteredProducts = searchTerm
+    ? products.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.code && p.code.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : products;
 
-  // ── AGREGAR ITEM A LA COTIZACIÓN ──
+  const groupedProducts = CAT_ORDER
+    .map(cat => ({
+      cat,
+      label: CAT_LABEL[cat] ?? cat,
+      icon: CAT_ICONS[cat] ?? "📦",
+      color: CAT_COLORS[cat] ?? "from-gray-500 to-gray-600",
+      products: filteredProducts.filter(p => p.category === cat),
+    }))
+    .filter(g => g.products.length > 0);
+
+  // ── Handlers ──
   const handleAddToQuote = (item: any) => {
-    const newItem: QuoteItem = {
-      id: Math.random().toString(),
-      ...item,
-    };
+    const newItem: QuoteItem = { id: Math.random().toString(), ...item };
     setQuoteItems([...quoteItems, newItem]);
-    setSelectedProduct(null); // Vuelve al selector
+    setSelectedProduct(null);
   };
 
-  // ── ELIMINAR ITEM DE LA COTIZACIÓN ──
   const handleRemoveItem = (id: string) => {
     setQuoteItems(quoteItems.filter(item => item.id !== id));
   };
 
-  // ── GUARDAR COTIZACIÓN ──
   const handleSaveQuote = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || quoteItems.length === 0) return;
 
     setIsSaving(true);
-
     const subtotal = quoteItems.reduce((sum, item) => sum + item.line_total, 0);
     const ivu = subtotal * 0.115;
     const total = subtotal + ivu;
@@ -156,7 +179,7 @@ export default function NuevaCotizacionPage() {
     router.push(`/dashboard/cotizaciones/${quote.id}`);
   };
 
-  // ── CALCULAR TOTAL ──
+  // ── Totales ──
   const subtotal = quoteItems.reduce((sum, item) => sum + item.line_total, 0);
   const ivu = subtotal * 0.115;
   const total = subtotal + ivu;
@@ -164,144 +187,182 @@ export default function NuevaCotizacionPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-white">
-        <p className="text-gray-500 font-bold">Cargando...</p>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-500 font-bold text-sm">Cargando catálogo...</p>
+        </div>
       </div>
     );
   }
 
-  // ── VISTA: SELECTOR DE PRODUCTOS ──
-  if (!selectedProduct) {
+  // ── VISTA: CALCULADORA ──
+  if (selectedProduct) {
     return (
-      <div className="pb-32">
-        {/* Header compacto */}
-        <div className="px-4 pt-4 pb-3 border-b border-gray-100 sticky top-12 md:top-0 bg-white/95 backdrop-blur-md z-10">
-          <h1 className="text-xl font-black text-gray-900 tracking-tight">Nueva Cotización</h1>
+      <div className="flex flex-col h-screen bg-white">
+        <div className="px-4 pt-4 pb-2">
+          <button
+            onClick={() => setSelectedProduct(null)}
+            className="flex items-center gap-2 text-xs font-bold text-gray-600 uppercase tracking-widest hover:text-[#F97316] transition-colors active:scale-95"
+          >
+            <span className="text-lg">←</span> Volver
+          </button>
+        </div>
+        <QuickCalculator
+          product={selectedProduct}
+          userPrice={userPrices[selectedProduct.id] ?? selectedProduct.base_price}
+          onAddToQuote={handleAddToQuote}
+        />
+      </div>
+    );
+  }
+
+  // ── VISTA: CATÁLOGO PREMIUM ──
+  return (
+    <div className="pb-32 bg-white min-h-screen">
+      {/* Header sticky */}
+      <div className="px-4 pt-4 pb-3 border-b border-gray-100 sticky top-0 bg-white/95 backdrop-blur-md z-20">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-lg font-black text-[#0F172A] tracking-tight">Nueva Cotización</h1>
+          {quoteItems.length > 0 && (
+            <span className="bg-[#F97316] text-white text-xs font-black px-2.5 py-1 rounded-full">
+              {quoteItems.length} items
+            </span>
+          )}
         </div>
 
-        {/* Lista de productos compacta */}
-        <div className="px-4 py-3">
-          {/* Lista simple con iconos por categoría */}
-          {Object.entries(groupedProducts).map(([cat, catProducts]) => (
-            <div key={cat} className="mb-4">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span className="text-base">{CATEGORY_ICONS[cat] || '📦'}</span>
-                {cat}
-              </p>
-              <div className="space-y-1">
-                {catProducts.map((p) => (
+        {/* Barra de búsqueda */}
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input
+            type="text"
+            placeholder="Buscar producto..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-gray-100 rounded-xl text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-[#F97316]/30 focus:outline-none transition-all border border-transparent focus:border-[#F97316]/30"
+          />
+        </div>
+      </div>
+
+      {/* Catálogo por categorías */}
+      <div className="px-4 py-4 space-y-5">
+        {groupedProducts.map(({ cat, label, icon, color, products: catProducts }) => (
+          <div key={cat}>
+            {/* Header de categoría con gradiente */}
+            <div className={`flex items-center gap-2 mb-2.5 px-3 py-2 rounded-xl bg-gradient-to-r ${color} shadow-sm`}>
+              <span className="text-lg">{icon}</span>
+              <h2 className="text-xs font-black text-white uppercase tracking-wider">{label}</h2>
+              <span className="ml-auto text-[10px] font-bold text-white/70">{catProducts.length}</span>
+            </div>
+
+            {/* Grid de productos - 2 columnas en móvil */}
+            <div className="grid grid-cols-2 gap-2">
+              {catProducts.map((p) => {
+                const price = userPrices[p.id] ?? p.base_price;
+                return (
                   <button
                     key={p.id}
                     onClick={() => setSelectedProduct(p)}
-                    className="w-full flex items-center justify-between px-3 py-3 bg-gray-50 rounded-xl active:scale-[0.98] active:bg-orange-50 transition-all"
+                    className="group relative bg-white border-2 border-gray-100 rounded-xl p-3 text-left active:scale-[0.97] active:border-[#F97316] hover:border-[#F97316]/50 hover:shadow-md transition-all"
                   >
-                    <span className="font-semibold text-sm text-[#0F172A] text-left">{p.name}</span>
-                    <span className="text-xs font-bold text-[#F97316] whitespace-nowrap ml-2">
-                      {formatUSD(userPrices[p.id] ?? p.base_price)}
-                    </span>
+                    {/* Imagen o icono */}
+                    <div className="w-full aspect-[4/3] bg-gray-50 rounded-lg mb-2 flex items-center justify-center overflow-hidden border border-gray-100">
+                      {p.imagen_url ? (
+                        <img
+                          src={p.imagen_url}
+                          alt={p.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-3xl opacity-60">{icon}</span>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <p className="text-[11px] font-bold text-[#0F172A] leading-tight line-clamp-2 mb-1">
+                      {p.name}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-gray-400 font-medium">{p.code}</span>
+                      <span className="text-xs font-black text-[#F97316]">{formatUSD(price)}</span>
+                    </div>
+
+                    {/* Hover indicator */}
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-[#F97316] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
+                      <span className="text-white text-[10px] font-bold">+</span>
+                    </div>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          ))}
-          {/* Grid Premium (oculto en móvil, visible en desktop) */}
-          <div className="hidden md:block">
-          <PremiumProductGrid
-            products={products.map(p => ({
-              code: p.code || "",
-              name: p.name,
-              category: p.category,
-              image: p.imagen_url || undefined,
-              price: userPrices[p.id] ?? p.base_price,
-              description: `${p.category.toUpperCase()} - ${p.price_type.replace("_", " ")}`,
-            }))}
-            onSelect={(product: any) => {
-              setSelectedProduct(product);
-            }}
-            groupByCategory={true}
-          />
           </div>
-        </div>
+        ))}
 
-        {/* Lista de Ítems Agregados (Flotante) */}
-        {quoteItems.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-100 shadow-2xl max-h-[50vh] overflow-y-auto">
-            {/* Lista de Ítems */}
-            <div className="p-5 space-y-2">
-              {quoteItems.map(item => (
-                <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <div>
-                    <p className="text-xs font-bold text-gray-900">
-                      {item.product_snapshot.name}
-                    </p>
-                    <p className="text-[10px] text-gray-500">
-                      {item.width_inches}" × {item.height_inches}" × {item.quantity}u
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm font-bold text-[#F97316]">
-                      {formatUSD(item.line_total)}
-                    </p>
-                    <button
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="text-red-400 font-bold text-lg hover:text-red-600 transition-colors"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Resumen y Botón */}
-            <div className="px-5 py-4 border-t border-gray-100 bg-gray-50">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <p className="text-[10px] text-gray-600 font-bold uppercase">Subtotal</p>
-                  <p className="text-lg font-bold text-gray-900">{formatUSD(subtotal)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-600 font-bold uppercase">IVU (11.5%)</p>
-                  <p className="text-lg font-bold text-gray-900">{formatUSD(ivu)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-600 font-bold uppercase">Total</p>
-                  <p className="text-2xl font-900 text-[#F97316]">{formatUSD(total)}</p>
-                </div>
-              </div>
-
-              <button
-                onClick={handleSaveQuote}
-                disabled={isSaving}
-                className="w-full h-14 bg-[#F97316] text-white font-bold uppercase tracking-widest rounded-2xl shadow-lg active:scale-95 transition-all hover:bg-orange-600 disabled:bg-gray-400"
-              >
-                {isSaving ? "Guardando..." : "Guardar Cotización"}
-              </button>
-            </div>
+        {/* Sin resultados */}
+        {groupedProducts.length === 0 && (
+          <div className="text-center py-16">
+            <span className="text-4xl mb-3 block">🔍</span>
+            <p className="text-gray-500 font-bold">No se encontraron productos</p>
+            <p className="text-gray-400 text-sm mt-1">Intenta con otro término</p>
           </div>
         )}
       </div>
-    );
-  }
 
-  // ── VISTA: CALCULADORA RÁPIDA ──
-  return (
-    <div className="flex flex-col h-screen bg-white">
-      {/* Botón de Atrás */}
-      <div className="px-5 pt-4 pb-2">
-        <button
-          onClick={() => setSelectedProduct(null)}
-          className="text-xs font-bold text-gray-600 uppercase tracking-widest hover:text-[#F97316] transition-colors"
-        >
-          ← Volver a Productos
-        </button>
-      </div>
+      {/* Panel flotante de items agregados */}
+      {quoteItems.length > 0 && (
+        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white border-t-2 border-[#F97316]/20 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] z-30 max-h-[45vh] overflow-y-auto rounded-t-2xl">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-2 pb-1">
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          </div>
 
-      {/* Calculadora */}
-      <QuickCalculator
-        product={selectedProduct}
-        userPrice={userPrices[selectedProduct.id] ?? selectedProduct.base_price}
-        onAddToQuote={handleAddToQuote}
-      />
+          {/* Items */}
+          <div className="px-4 pb-2 space-y-1.5">
+            {quoteItems.map(item => (
+              <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-50">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-900 truncate">{item.product_snapshot.name}</p>
+                  <p className="text-[10px] text-gray-500">{item.width_inches}" × {item.height_inches}" · {item.quantity}u</p>
+                </div>
+                <div className="flex items-center gap-2 ml-2">
+                  <p className="text-sm font-black text-[#F97316]">{formatUSD(item.line_total)}</p>
+                  <button
+                    onClick={() => handleRemoveItem(item.id)}
+                    className="w-6 h-6 flex items-center justify-center rounded-full bg-red-50 text-red-500 font-bold text-sm hover:bg-red-100 transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Totales y CTA */}
+          <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-orange-50/50 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-[9px] text-gray-500 font-bold uppercase">Subtotal</p>
+                <p className="text-sm font-bold text-gray-800">{formatUSD(subtotal)}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-gray-500 font-bold uppercase">IVU 11.5%</p>
+                <p className="text-sm font-bold text-gray-800">{formatUSD(ivu)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] text-gray-500 font-bold uppercase">Total</p>
+                <p className="text-xl font-black text-[#F97316]">{formatUSD(total)}</p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSaveQuote}
+              disabled={isSaving}
+              className="w-full h-12 bg-[#F97316] text-white font-black uppercase text-sm tracking-wider rounded-xl shadow-lg shadow-orange-200 active:scale-[0.97] transition-all hover:bg-orange-600 disabled:bg-gray-300 disabled:shadow-none"
+            >
+              {isSaving ? "Guardando..." : "💾 Guardar Cotización"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
