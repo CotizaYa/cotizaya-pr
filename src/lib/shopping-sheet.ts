@@ -14,6 +14,13 @@ export interface ProfileItem {
   finish?: string; // 'natural', 'anodizado', 'pintura'
 }
 
+export const formatUSD = (amount: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount);
+};
+
 export interface ShoppingSheet {
   quoteId: string;
   date: Date;

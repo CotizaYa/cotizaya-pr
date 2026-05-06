@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { calcLineTotal, parseFraction, formatUSD } from "@/lib/calculations";
+import { DeductionsPanel } from "@/components/quote/DeductionsPanel";
 
 interface QuickCalculatorProps {
   product: {
@@ -20,6 +21,7 @@ export function QuickCalculator({ product, userPrice, onAddToQuote }: QuickCalcu
   const [quantity, setQuantity] = useState("1");
   const [color, setColor] = useState("blanco");
   const [lineTotal, setLineTotal] = useState(0);
+  const [showDeductions, setShowDeductions] = useState(false);
 
   // ── LIVE UPDATE: Recalcula el total cada vez que cambia algo ──
   useEffect(() => {
@@ -51,6 +53,12 @@ export function QuickCalculator({ product, userPrice, onAddToQuote }: QuickCalcu
 
     return () => clearTimeout(timer);
   }, [widthInput, heightInput, quantity, userPrice, product.price_type]);
+
+  const handleApplyDeductions = (adjustedWidth: number, adjustedHeight: number) => {
+    setWidthInput(adjustedWidth.toString());
+    setHeightInput(adjustedHeight.toString());
+    setShowDeductions(false);
+  };
 
   const handleAddToQuote = () => {
     onAddToQuote({
@@ -117,6 +125,27 @@ export function QuickCalculator({ product, userPrice, onAddToQuote }: QuickCalcu
                 className="w-full h-16 px-4 text-2xl font-bold bg-gray-50 border-2 border-gray-200 rounded-2xl focus:border-[#F97316] focus:bg-white outline-none transition-all shadow-md"
               />
             </div>
+
+            {/* Botón de Deducciones */}
+            <div className="pt-2">
+              <button
+                onClick={() => setShowDeductions(!showDeductions)}
+                className="w-full py-3 border-2 border-dashed border-blue-300 text-blue-600 font-bold rounded-2xl hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+              >
+                📐 {showDeductions ? "Cerrar Deducciones" : "Calcular Deducciones (Gaps)"}
+              </button>
+            </div>
+
+            {/* Panel de Deducciones */}
+            {showDeductions && (
+              <div className="mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                <DeductionsPanel
+                  width={parseFraction(widthInput)}
+                  height={parseFraction(heightInput)}
+                  onApplyDeductions={handleApplyDeductions}
+                />
+              </div>
+            )}
           </div>
         )}
 

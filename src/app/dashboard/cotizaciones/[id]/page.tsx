@@ -4,6 +4,8 @@ import Link from "next/link";
 import { formatUSD } from "@/lib/calculations";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { MarkSentButton } from "./MarkSentButton";
+import { VisualShoppingSheet } from "@/components/quote/VisualShoppingSheet";
+import { calculateProfilesNeeded, optimizeProfiles } from "@/lib/shopping-sheet";
 
 const LABEL: Record<string,string> = { draft:"Borrador", sent:"Enviada", viewed:"Vista", accepted:"Aprobada", rejected:"Rechazada", expired:"Expirada" };
 const BG:    Record<string,string> = { draft:"#e5e5e5", sent:"#dbeafe", viewed:"#fef9c3", accepted:"#dcfce7", rejected:"#fee2e2", expired:"#e5e5e5" };
@@ -39,6 +41,27 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
   const waPhone = client?.phone?.replace(/\D/g,"");
   const waUrl = waPhone ? `https://wa.me/1${waPhone}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
 
+  // Generar Hoja de Compra para el primer producto (Demo)
+  const firstItem = items?.[0];
+  let shoppingSheet = null;
+  if (firstItem) {
+    const profiles = calculateProfilesNeeded(
+      firstItem.width_inches || 36,
+      firstItem.height_inches || 80,
+      (firstItem.category_snapshot || 'puerta') as any
+    );
+    const { optimized, wastePercentage, notes } = optimizeProfiles(profiles);
+    shoppingSheet = {
+      quoteId: id,
+      date: new Date(quote.created_at),
+      totalLinearFeet: optimized.reduce((acc, p) => acc + (p.lengthInches / 12), 0),
+      totalCost: optimized.reduce((acc, p) => acc + p.totalPrice, 0),
+      profileItems: optimized,
+      wastePercentage,
+      optimizationNotes: notes,
+    };
+  }
+
   return (
     <div style={{ padding:"24px", maxWidth:"800px", margin:"0 auto" }}>
       <div style={{ display:"flex", flexWrap:"wrap", alignItems:"flex-start", justifyContent:"space-between", gap:"12px", marginBottom:"20px" }}>
@@ -69,9 +92,16 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
         </div>
       )}
 
+      {/* Hoja de Compra Visual (Premium Tool) */}
+      {shoppingSheet && (
+        <div style={{ marginBottom: "24px" }}>
+          <VisualShoppingSheet sheet={shoppingSheet} />
+        </div>
+      )}
+
       <div style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", overflow:"hidden", marginBottom:"14px" }}>
         <div style={{ padding:"12px 16px", borderBottom:"1px solid #f5f5f5" }}>
-          <p style={{ margin:0, fontSize:"12px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", color:"#525252" }}>Detalle de Materiales</p>
+          <p style={{ margin:0, fontSize:"12px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", color:"#525252" }}>Resumen de Cotización</p>
         </div>
         {Object.entries(grouped).map(([cat, catItems]) => (
           <div key={cat}>

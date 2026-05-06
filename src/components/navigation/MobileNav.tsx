@@ -22,14 +22,14 @@ export function MobileNav() {
           <Link
             key={href}
             href={href}
-            className={`flex flex-col items-center justify-center transition-colors ${
+            className={`flex flex-col items-center justify-center transition-colors flex-1 h-16 ${
               highlight
-                ? "flex-1 h-24 bg-gradient-to-t from-[#F97316] to-orange-500 text-white shadow-lg"
-                : `flex-1 h-16 ${isActive ? "text-[#F97316]" : "text-gray-500"}`
+                ? "bg-gradient-to-t from-[#F97316] to-orange-500 text-white shadow-lg"
+                : `${isActive ? "text-[#F97316]" : "text-gray-500"}`
             }`}
           >
-            <span className={`${highlight ? "text-2xl" : "text-2xl"}`}>{icon}</span>
-            <span className={`font-bold uppercase tracking-wider ${highlight ? "text-[10px]" : "text-[9px]"}`}>
+            <span className="text-xl">{icon}</span>
+            <span className={`font-bold uppercase tracking-wider ${highlight ? "text-[9px]" : "text-[9px]"}`}>
               {label}
             </span>
           </Link>

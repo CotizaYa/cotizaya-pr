@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { QuickCalculator } from "@/components/quote-builder/QuickCalculator";
+import { PremiumProductGrid } from "@/components/quote/PremiumProductGrid";
 import { formatUSD } from "@/lib/calculations";
 
 interface Product {
@@ -172,61 +173,31 @@ export default function NuevaCotizacionPage() {
   if (!selectedProduct) {
     return (
       <div className="pb-32">
-        {/* Header */}
-        <div className="px-5 pt-6 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <h1 className="text-3xl font-900 text-gray-900">Nueva Cotización</h1>
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">
-            Selecciona un producto para empezar
+        {/* Header Premium */}
+        <div className="px-5 pt-8 pb-6 border-b border-gray-100 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Nueva Cotización</h1>
+          <p className="text-sm text-gray-500 font-medium mt-1">
+            Construye una oferta profesional en segundos
           </p>
         </div>
 
-        {/* Contenido */}
-        <div className="px-5 py-6 space-y-8">
-          {/* Mostrar categorías */}
-          {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-            <div key={category}>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">{CATEGORY_ICONS[category] || "📦"}</span>
-                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest">
-                  {category}
-                </h2>
-              </div>
-
-              {/* Grid de Productos (2 columnas) */}
-              <div className="grid grid-cols-2 gap-3">
-                {categoryProducts.map(product => {
-                  const userPrice = userPrices[product.id] ?? product.base_price;
-                  return (
-                    <button
-                      key={product.id}
-                      onClick={() => setSelectedProduct(product)}
-                      className="flex flex-col items-center justify-center p-4 bg-white border-2 border-gray-200 rounded-2xl hover:border-[#F97316] hover:bg-orange-50 active:scale-95 transition-all shadow-md gap-3"
-                    >
-                      {product.imagen_url ? (
-                        <img 
-                          src={product.imagen_url} 
-                          alt={product.name}
-                          className="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow-sm"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                          {product.code?.charAt(0) || "📦"}
-                        </div>
-                      )}
-                      <div className="text-center">
-                        <p className="text-[11px] font-black text-gray-900 line-clamp-2 leading-tight">
-                          {product.name}
-                        </p>
-                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">
-                          {product.code}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        {/* Contenido Premium */}
+        <div className="px-5 py-6">
+          <PremiumProductGrid
+            products={products.map(p => ({
+              code: p.code || "",
+              name: p.name,
+              category: p.category,
+              image: p.imagen_url || undefined,
+              price: userPrices[p.id] ?? p.base_price,
+              description: `${p.category.toUpperCase()} - ${p.price_type.replace("_", " ")}`,
+            }))}
+            onSelect={(code) => {
+              const product = products.find(p => p.code === code);
+              if (product) setSelectedProduct(product);
+            }}
+            groupByCategory={true}
+          />
         </div>
 
         {/* Lista de Ítems Agregados (Flotante) */}
