@@ -1,10 +1,10 @@
-"use client";
+'use client'
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { QuickCalculator } from "@/components/quote-builder/QuickCalculator";
 import { formatUSD } from "@/lib/calculations";
-import Image from "next/image";
 
 interface Product {
   id: string;
@@ -49,7 +49,7 @@ const CAT_IMAGES: Record<string, string> = {
   screen_ac: "/products/screen-ventana.png",
   closet: "/products/closet-cristal.png",
   garaje: "/products/puerta-doble-vidrio.png",
-  miscelanea: "/products/ventana-fija.png",
+  miscelanea: "ICON_ACCESSORY",
 };
 
 // Mapeo específico por código de producto
@@ -98,56 +98,43 @@ export default function NuevaCotizacionPage() {
       if (!user) return;
 
       const [productsRes, pricesRes] = await Promise.all([
-        supabase
-          .from("products")
-          .select("id, code, name, category, price_type, base_price, unit_label, is_active, imagen_url")
-          .or(`owner_id.is.null,owner_id.eq.${user.id}`)
-          .eq("is_active", true)
-          .order("category")
-          .order("code"),
-        supabase
-          .from("user_prices")
-          .select("product_id, price")
-          .eq("user_id", user.id),
+        supabase.from("products").select("*").eq("is_active", true),
+        supabase.from("user_prices").select("*").eq("user_id", user.id),
       ]);
 
       setProducts(productsRes.data ?? []);
-      const priceMap: Record<string, number> = {};
-      (pricesRes.data ?? []).forEach(({ product_id, price }) => {
-        priceMap[product_id] = price;
+      const pricesMap: Record<string, number> = {};
+      (pricesRes.data ?? []).forEach((p: any) => {
+        pricesMap[p.product_id] = p.price;
       });
-      setUserPrices(priceMap);
+      setUserPrices(pricesMap);
       setIsLoading(false);
     };
-
     loadData();
-  }, []);
+  }, [supabase]);
 
-  // ── Filtrar y agrupar productos ──
-  const filteredProducts = searchTerm
-    ? products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.code && p.code.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-    : products;
+  const groupedProducts = CAT_ORDER.map((cat) => ({
+    cat,
+    label: CAT_LABEL[cat],
+    products: products
+      .filter((p) => p.category === cat)
+      .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase())),
+  })).filter((g) => g.products.length > 0);
 
-  const groupedProducts = CAT_ORDER
-    .map(cat => ({
-      cat,
-      label: CAT_LABEL[cat] ?? cat,
-      products: filteredProducts.filter(p => p.category === cat),
-    }))
-    .filter(g => g.products.length > 0);
-
-  // ── Handlers ──
   const handleAddToQuote = (item: any) => {
-    const newItem: QuoteItem = { id: Math.random().toString(), ...item };
+    const newItem: QuoteItem = {
+      id: Math.random().toString(),
+      product_id: item.product_id,
+      product_snapshot: item.product_snapshot,
+      width_inches: item.width_inches,
+      height_inches: item.height_inches,
+      quantity: item.quantity,
+      color: item.color,
+      line_total: item.line_total,
+    };
+
     setQuoteItems([...quoteItems, newItem]);
     setSelectedProduct(null);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    setQuoteItems(quoteItems.filter(item => item.id !== id));
   };
 
   const handleSaveQuote = async () => {
@@ -207,14 +194,31 @@ export default function NuevaCotizacionPage() {
     router.push(`/dashboard/cotizaciones/${quote.id}`);
   };
 
-  // ── Obtener imagen del producto ──
   const getProductImage = (p: Product): string => {
     if (p.imagen_url) return p.imagen_url;
     if (p.code && PRODUCT_IMAGES[p.code]) return PRODUCT_IMAGES[p.code];
-    return CAT_IMAGES[p.category] || "/products/ventana-fija.png";
+    return CAT_IMAGES[p.category] || "ICON_ACCESSORY";
   };
 
-  // ── Totales ──
+  const renderProductImage = (imagePath: string) => {
+    if (imagePath === "ICON_ACCESSORY") {
+      return (
+        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
+          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m6 2a8 8 0 11-16 0 8 8 0 0116 0zm-7 5a1 1 0 11-2 0 1 1 0 012 0zm0 4a1 1 0 11-2 0 1 1 0 012 0zm4-4a1 1 0 11-2 0 1 1 0 012 0zm0 4a1 1 0 11-2 0 1 1 0 012 0z" />
+          </svg>
+        </div>
+      );
+    }
+    return (
+      <img
+        src={imagePath}
+        alt="Producto"
+        className="w-full h-full object-contain drop-shadow-lg"
+      />
+    );
+  };
+
   const subtotal = quoteItems.reduce((sum, item) => sum + item.line_total, 0);
   const ivu = subtotal * 0.115;
   const total = subtotal + ivu;
@@ -230,7 +234,6 @@ export default function NuevaCotizacionPage() {
     );
   }
 
-  // ── VISTA: CALCULADORA ──
   if (selectedProduct) {
     return (
       <div className="flex flex-col h-screen bg-white">
@@ -252,10 +255,8 @@ export default function NuevaCotizacionPage() {
     );
   }
 
-  // ── VISTA: CATÁLOGO PREMIUM (DARK THEME - LUMINIO KILLER) ──
   return (
     <div className="pb-32 bg-[#0F172A] min-h-screen">
-      {/* Header sticky */}
       <div className="px-4 pt-4 pb-3 border-b border-white/5 sticky top-0 bg-[#0F172A]/95 backdrop-blur-md z-20">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-black text-white tracking-tight">Nueva Cotización</h1>
@@ -266,7 +267,6 @@ export default function NuevaCotizacionPage() {
           )}
         </div>
 
-        {/* Barra de búsqueda */}
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           <input
@@ -279,18 +279,15 @@ export default function NuevaCotizacionPage() {
         </div>
       </div>
 
-      {/* Catálogo por categorías */}
       <div className="px-4 py-4 space-y-6">
         {groupedProducts.map(({ cat, label, products: catProducts }) => (
           <div key={cat}>
-            {/* Header de categoría */}
             <div className="flex items-center gap-2 mb-3 px-1">
               <div className="w-1 h-5 rounded-full" style={{ backgroundColor: CAT_ACCENT[cat] || "#F97316" }} />
               <h2 className="text-xs font-black text-white/80 uppercase tracking-wider">{label}</h2>
               <span className="ml-auto text-[10px] font-bold text-white/30 bg-white/5 px-2 py-0.5 rounded-full">{catProducts.length}</span>
             </div>
 
-            {/* Grid de productos - 2 columnas */}
             <div className="grid grid-cols-2 gap-3">
               {catProducts.map((p) => {
                 const price = userPrices[p.id] ?? p.base_price;
@@ -301,99 +298,41 @@ export default function NuevaCotizacionPage() {
                     onClick={() => setSelectedProduct(p)}
                     className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-2.5 text-left active:scale-[0.96] hover:bg-white/[0.06] hover:border-[#F97316]/30 transition-all duration-200"
                   >
-                    {/* Imagen del producto */}
                     <div className="w-full aspect-square bg-gradient-to-br from-white/[0.05] to-white/[0.02] rounded-xl mb-2.5 flex items-center justify-center overflow-hidden border border-white/[0.05]">
-                      <img
-                        src={imgSrc}
-                        alt={p.name}
-                        className="w-[85%] h-[85%] object-contain drop-shadow-lg"
-                      />
+                      {renderProductImage(imgSrc)}
                     </div>
 
-                    {/* Info */}
                     <p className="text-[11px] font-bold text-white/90 leading-tight line-clamp-2 mb-1.5">
                       {p.name}
                     </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-white/30 font-medium">{p.code}</span>
-                      <span className="text-xs font-black text-[#F97316]">{formatUSD(price)}</span>
-                    </div>
-
-                    {/* Hover/Active indicator */}
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-[#F97316] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity shadow-lg shadow-orange-500/30">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-                    </div>
+                    <p className="text-[10px] text-white/50 mb-2">{formatUSD(price)}</p>
                   </button>
                 );
               })}
             </div>
           </div>
         ))}
-
-        {/* Sin resultados */}
-        {groupedProducts.length === 0 && (
-          <div className="text-center py-16">
-            <svg className="w-12 h-12 mx-auto mb-3 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <p className="text-white/50 font-bold">No se encontraron productos</p>
-            <p className="text-white/30 text-sm mt-1">Intenta con otro término</p>
-          </div>
-        )}
       </div>
 
-      {/* Panel flotante de items agregados */}
       {quoteItems.length > 0 && (
-        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white border-t-2 border-[#F97316] shadow-[0_-8px_30px_rgba(0,0,0,0.3)] z-30 max-h-[45vh] overflow-y-auto rounded-t-2xl">
-          {/* Drag handle */}
-          <div className="flex justify-center pt-2 pb-1">
-            <div className="w-10 h-1 bg-gray-300 rounded-full" />
-          </div>
-
-          {/* Items */}
-          <div className="px-4 pb-2 space-y-1.5">
-            {quoteItems.map(item => (
-              <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-50">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-gray-900 truncate">{item.product_snapshot.name}</p>
-                  <p className="text-[10px] text-gray-500">{item.width_inches}&quot; x {item.height_inches}&quot; · {item.quantity}u</p>
-                </div>
-                <div className="flex items-center gap-2 ml-2">
-                  <p className="text-sm font-black text-[#F97316]">{formatUSD(item.line_total)}</p>
-                  <button
-                    onClick={() => handleRemoveItem(item.id)}
-                    className="w-6 h-6 flex items-center justify-center rounded-full bg-red-50 text-red-500 font-bold text-sm hover:bg-red-100 transition-colors"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Totales y CTA */}
-          <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-orange-50/50 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-[9px] text-gray-500 font-bold uppercase">Subtotal</p>
-                <p className="text-sm font-bold text-gray-800">{formatUSD(subtotal)}</p>
-              </div>
-              <div>
-                <p className="text-[9px] text-gray-500 font-bold uppercase">IVU 11.5%</p>
-                <p className="text-sm font-bold text-gray-800">{formatUSD(ivu)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[9px] text-gray-500 font-bold uppercase">Total</p>
-                <p className="text-xl font-black text-[#F97316]">{formatUSD(total)}</p>
-              </div>
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4 shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Subtotal</p>
+              <p className="text-lg font-black text-gray-900">{formatUSD(subtotal)}</p>
             </div>
-
-            <button
-              onClick={handleSaveQuote}
-              disabled={isSaving}
-              className="w-full h-12 bg-[#F97316] text-white font-black uppercase text-sm tracking-wider rounded-xl shadow-lg shadow-orange-200 active:scale-[0.97] transition-all hover:bg-orange-600 disabled:bg-gray-300 disabled:shadow-none"
-            >
-              {isSaving ? "Guardando..." : "Guardar Cotización"}
-            </button>
+            <div className="text-right">
+              <p className="text-xs text-gray-500 font-medium">Total</p>
+              <p className="text-2xl font-black text-[#F97316]">{formatUSD(total)}</p>
+            </div>
           </div>
+          <button
+            onClick={handleSaveQuote}
+            disabled={isSaving}
+            className="w-full bg-[#F97316] hover:bg-orange-600 text-white font-bold py-3 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
+          >
+            {isSaving ? "Guardando..." : "💾 GUARDAR COTIZACIÓN"}
+          </button>
         </div>
       )}
     </div>

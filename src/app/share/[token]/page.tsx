@@ -204,18 +204,8 @@ export default async function CotizacionPublicaPage({ params }: PageProps) {
       <div className="px-6 pb-6">
         <div className="bg-[#0F172A] rounded-2xl px-6 py-6 space-y-3">
           <div className="flex justify-between text-sm text-gray-300">
-            <span>Materiales</span>
-            <span className="tabular-nums font-medium">{fmt(quote.subtotal_materials)}</span>
-          </div>
-          {Number(quote.subtotal_labor) > 0 && (
-            <div className="flex justify-between text-sm text-gray-300">
-              <span>Mano de obra</span>
-              <span className="tabular-nums font-medium">{fmt(quote.subtotal_labor)}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-sm text-gray-300 border-t border-white/10 pt-3">
-            <span>IVU ({ivu_pct}%)</span>
-            <span className="tabular-nums font-medium">{fmt(quote.ivu_amount)}</span>
+            <span>Subtotal</span>
+            <span className="tabular-nums font-medium">{fmt(Number(quote.subtotal_materials) + Number(quote.subtotal_labor))}</span>
           </div>
 
           {/* TOTAL — dominante */}
@@ -252,7 +242,7 @@ export default async function CotizacionPublicaPage({ params }: PageProps) {
           <span className="font-bold text-[#F97316]">CotizaYa PR</span>
         </p>
         <p className="text-[10px] text-gray-300 mt-1">
-          Precios incluyen IVU {ivu_pct}% · Sujeto a inspección final
+          Precio final listo para instalación · Sujeto a inspección final
         </p>
       </div>
     </div>
