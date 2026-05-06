@@ -10,6 +10,7 @@ interface Product {
   price_type: string;
   base_price: number;
   unit_label: string | null;
+  imagen_url?: string | null;
 }
 
 const CAT_ICONS: Record<string, string> = {
@@ -53,9 +54,17 @@ export function PriceCard({
 
   return (
     <div className="flex items-center gap-3 bg-white border-b border-gray-100 p-3 hover:bg-orange-50/30 transition-colors">
-      {/* Icono de Categoría Compacto */}
-      <div className="flex-shrink-0 w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-xl shadow-sm border border-gray-100">
-        {CAT_ICONS[product.category] || "📦"}
+      {/* Imagen o Icono de Categoría Compacto */}
+      <div className="flex-shrink-0 w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden">
+        {product.imagen_url ? (
+          <img 
+            src={product.imagen_url} 
+            alt={product.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          CAT_ICONS[product.category] || "📦"
+        )}
       </div>
 
       {/* Información del Producto - Prominente */}

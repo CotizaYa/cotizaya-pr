@@ -30,7 +30,7 @@ export default async function PreciosPage() {
   const [{ data: products }, { data: userPrices }] = await Promise.all([
     supabase
       .from("products")
-      .select("id, code, name, category, price_type, base_price, unit_label")
+      .select("id, code, name, category, price_type, base_price, unit_label, imagen_url")
       .or(`owner_id.is.null,owner_id.eq.${user.id}`)
       .eq("is_active", true)
       .order("category")
