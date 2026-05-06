@@ -5,7 +5,7 @@ import { formatUSD } from "@/lib/calculations";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { MarkSentButton } from "./MarkSentButton";
 import { VisualShoppingSheet } from "@/components/quote/VisualShoppingSheet";
-import { calculateProfilesNeeded, optimizeProfiles } from "@/lib/shopping-sheet";
+import { calculateProfilesNeeded, optimizeProfiles, ProfileItem } from "@/lib/shopping-sheet";
 
 const LABEL: Record<string,string> = { draft:"Borrador", sent:"Enviada", viewed:"Vista", accepted:"Aprobada", rejected:"Rechazada", expired:"Expirada" };
 const BG:    Record<string,string> = { draft:"#e5e5e5", sent:"#dbeafe", viewed:"#fef9c3", accepted:"#dcfce7", rejected:"#fee2e2", expired:"#e5e5e5" };
@@ -57,13 +57,14 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
     }
 
     if (allProfiles.length > 0) {
-      const { optimized, wastePercentage, notes } = optimizeProfiles(allProfiles);
+      const { optimized, totalWasteInches, wastePercentage, notes } = optimizeProfiles(allProfiles);
       shoppingSheet = {
         quoteId: id,
         date: new Date(quote.created_at),
         totalLinearFeet: optimized.reduce((acc, p) => acc + (p.lengthInches / 12), 0),
         totalCost: optimized.reduce((acc, p) => acc + p.totalPrice, 0),
         profileItems: optimized,
+        totalWasteInches,
         wastePercentage,
         optimizationNotes: notes,
       };

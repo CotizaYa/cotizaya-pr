@@ -192,9 +192,8 @@ export default function NuevaCotizacionPage() {
               price: userPrices[p.id] ?? p.base_price,
               description: `${p.category.toUpperCase()} - ${p.price_type.replace("_", " ")}`,
             }))}
-            onSelect={(code) => {
-              const product = products.find(p => p.code === code);
-              if (product) setSelectedProduct(product);
+            onSelect={(product: any) => {
+              setSelectedProduct(product);
             }}
             groupByCategory={true}
           />
