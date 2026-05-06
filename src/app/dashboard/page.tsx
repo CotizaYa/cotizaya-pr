@@ -23,11 +23,13 @@ export default async function DashboardPage() {
   const aprobadas = all.filter((q:any) => q.status === "accepted");
   const pendientes = all.filter((q:any) => ["draft","sent","viewed"].includes(q.status));
 
+  // Ventas este mes = cotizaciones con status 'accepted' creadas este mes
+  const ventasMes = all.filter((q:any) => q.status === 'accepted' && q.created_at >= som);
+  const totalVentasMes = ventasMes.reduce((s:number, q:any) => s + Number(q.total), 0);
+
   const stats = [
-    { label:"Facturado este mes", value:formatUSD(thisMonth.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${thisMonth.length} cotizaciones`, color:"#f97316", icon:"📊" },
-    { label:"Cobrado (aprobadas)", value:formatUSD(aprobadas.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${aprobadas.length} aprobadas`, color:"#16a34a", icon:"✓" },
     { label:"Pendiente de cobro", value:formatUSD(pendientes.reduce((s:number,q:any)=>s+Number(q.total),0)), sub:`${pendientes.length} activas`, color:"#2563eb", icon:"⏳" },
-    { label:"IVU recolectado", value:formatUSD(thisMonth.reduce((s:number,q:any)=>s+(Number(q.total)*0.115/1.115),0)), sub:"11.5% este mes", color:"#7c3aed", icon:"💰" },
+    { label:"IVU recolectado", value:formatUSD(ventasMes.reduce((s:number,q:any)=>s+(Number(q.total)*0.115/1.115),0)), sub:"11.5% este mes", color:"#7c3aed", icon:"💰" },
   ];
 
   return (
@@ -49,8 +51,28 @@ export default async function DashboardPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats Grid - Premium Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+        {/* ══ WIDGET VENTAS ESTE MES ══ */}
+        <div className="relative bg-gradient-to-br from-green-600 to-green-700 rounded-3xl p-8 mb-8 overflow-hidden shadow-xl shadow-green-200/30">
+          {/* Background decoration */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative">
+            <p className="text-green-100 text-xs font-bold uppercase tracking-[0.2em] mb-2">
+              Trabajos confirmados
+            </p>
+            <p className="text-white font-black text-5xl md:text-6xl tabular-nums mb-3">
+              {formatUSD(totalVentasMes)}
+            </p>
+            <p className="text-green-200 text-sm font-medium">
+              {ventasMes.length} cotizaci{ventasMes.length === 1 ? 'ón' : 'ones'} cerrada{ventasMes.length === 1 ? '' : 's'} en {now.toLocaleDateString('es-PR', { month: 'long' })}
+            </p>
+          </div>
+        </div>
+
+        {/* Stats Grid - Secondary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {stats.map(s => (
             <div 
               key={s.label} 

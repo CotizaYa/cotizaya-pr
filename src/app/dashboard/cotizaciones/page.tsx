@@ -1,56 +1,223 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { formatUSD } from "@/lib/calculations";
+import { useRouter } from "next/navigation";
 
-const LABEL: Record<string,string> = { draft:"Borrador", sent:"Enviada", viewed:"Vista", accepted:"Aprobada", rejected:"Rechazada", expired:"Expirada" };
-const BG: Record<string,string>    = { draft:"#e5e5e5", sent:"#dbeafe", viewed:"#fef9c3", accepted:"#dcfce7", rejected:"#fee2e2", expired:"#e5e5e5" };
-const TX: Record<string,string>    = { draft:"#525252", sent:"#1d4ed8", viewed:"#854d0e", accepted:"#15803d", rejected:"#dc2626", expired:"#737373" };
+const LABEL: Record<string, string> = {
+  draft: "🟡 Pendiente",
+  sent: "🟡 Pendiente",
+  viewed: "🟡 Pendiente",
+  accepted: "🟢 Confirmada",
+  rejected: "Rechazada",
+  expired: "Expirada",
+};
+const BG: Record<string, string> = {
+  draft: "bg-gray-100",
+  sent: "bg-blue-100",
+  viewed: "bg-purple-100",
+  accepted: "bg-green-100",
+  rejected: "bg-red-100",
+  expired: "bg-gray-100",
+};
+const TX: Record<string, string> = {
+  draft: "text-gray-600",
+  sent: "text-blue-700",
+  viewed: "text-purple-700",
+  accepted: "text-green-700",
+  rejected: "text-red-700",
+  expired: "text-gray-500",
+};
 
-export default async function CotizacionesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: quotes } = await supabase
-    .from("quotes").select("id, quote_number, status, total, created_at, clients(full_name)")
-    .eq("owner_id", user.id).order("created_at", { ascending: false });
-  const all = quotes ?? [];
-  return (
-    <div style={{ padding:"24px", maxWidth:"800px", margin:"0 auto" }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px" }}>
-        <div>
-          <h1 style={{ margin:0, fontSize:"20px", fontWeight:700, color:"#171717" }}>Cotizaciones</h1>
-          <p style={{ margin:"2px 0 0", fontSize:"13px", color:"#737373" }}>{all.length} en total</p>
+function formatUSD(n: number | string | null | undefined) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Number(n ?? 0));
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("es-PR", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+interface Quote {
+  id: string;
+  quote_number: string;
+  status: string;
+  total: number;
+  created_at: string;
+  clients: { full_name: string } | null;
+}
+
+export default function CotizacionesPage() {
+  const supabase = createClient();
+  const router = useRouter();
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadQuotes();
+  }, []);
+
+  async function loadQuotes() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    const { data } = await supabase
+      .from("quotes")
+      .select("id, quote_number, status, total, created_at, clients(full_name)")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false });
+    setQuotes((data as any) ?? []);
+    setIsLoading(false);
+  }
+
+  async function markAsSold(quoteId: string) {
+    setUpdatingId(quoteId);
+    await supabase
+      .from("quotes")
+      .update({ status: "accepted" })
+      .eq("id", quoteId);
+    setQuotes((prev) =>
+      prev.map((q) => (q.id === quoteId ? { ...q, status: "accepted" } : q))
+    );
+    setUpdatingId(null);
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-pulse text-gray-400 text-sm font-medium">
+          Cargando cotizaciones...
         </div>
-        <Link href="/dashboard/cotizaciones/nueva" style={{ background:"#f97316", color:"white", textDecoration:"none", borderRadius:"12px", padding:"8px 16px", fontSize:"13px", fontWeight:700 }}>
+      </div>
+    );
+  }
+
+  const confirmadas = quotes.filter((q) => q.status === "accepted");
+  const pendientes = quotes.filter((q) => q.status !== "accepted" && q.status !== "rejected");
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6 pb-28">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900">Cotizaciones</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {quotes.length} total · {confirmadas.length} confirmadas
+          </p>
+        </div>
+        <Link
+          href="/dashboard/cotizaciones/nueva"
+          className="bg-[#f97316] text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all"
+        >
           ✚ Nueva
         </Link>
       </div>
-      <div style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", overflow:"hidden" }}>
-        {all.length === 0 ? (
-          <div style={{ padding:"48px", textAlign:"center" }}>
-            <p style={{ fontSize:"32px", margin:"0 0 8px" }}>📋</p>
-            <p style={{ fontSize:"13px", color:"#737373" }}>No hay cotizaciones aún</p>
-          </div>
-        ) : (
-          <ul style={{ margin:0, padding:0, listStyle:"none" }}>
-            {all.map((q:any) => (
-              <li key={q.id} style={{ borderBottom:"1px solid #fafafa" }}>
-                <Link href={`/dashboard/cotizaciones/${q.id}`} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 20px", textDecoration:"none" }}>
-                  <div>
-                    <p style={{ margin:0, fontSize:"13px", fontWeight:500, color:"#171717" }}>{q.clients?.full_name ?? "Sin cliente"}</p>
-                    <p style={{ margin:0, fontSize:"11px", color:"#a3a3a3" }}>#{q.quote_number} · {new Date(q.created_at).toLocaleDateString("es-PR")}</p>
-                  </div>
-                  <div style={{ display:"flex", gap:"10px", alignItems:"center" }}>
-                    <span style={{ background:BG[q.status], color:TX[q.status], borderRadius:"999px", padding:"2px 8px", fontSize:"10px", fontWeight:700 }}>{LABEL[q.status]}</span>
-                    <span style={{ fontSize:"13px", fontWeight:700, color:"#171717" }}>{formatUSD(q.total)}</span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+
+      {/* Resumen rápido */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">
+            Confirmadas
+          </p>
+          <p className="text-2xl font-black text-green-700 mt-1">
+            {formatUSD(confirmadas.reduce((s, q) => s + Number(q.total), 0))}
+          </p>
+          <p className="text-xs text-green-600 mt-0.5">{confirmadas.length} cotizaciones</p>
+        </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
+          <p className="text-[10px] font-bold text-orange-600 uppercase tracking-wider">
+            Pendientes
+          </p>
+          <p className="text-2xl font-black text-orange-700 mt-1">
+            {formatUSD(pendientes.reduce((s, q) => s + Number(q.total), 0))}
+          </p>
+          <p className="text-xs text-orange-600 mt-0.5">{pendientes.length} cotizaciones</p>
+        </div>
       </div>
+
+      {/* Lista de cotizaciones */}
+      {quotes.length === 0 ? (
+        <div className="bg-white border border-slate-100 rounded-2xl py-16 text-center">
+          <p className="text-4xl mb-3">📋</p>
+          <p className="text-sm text-slate-500">No hay cotizaciones aún</p>
+          <Link
+            href="/dashboard/cotizaciones/nueva"
+            className="inline-block mt-3 text-sm font-bold text-[#f97316]"
+          >
+            Crear la primera →
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {quotes.map((q) => (
+            <div
+              key={q.id}
+              className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between gap-3">
+                {/* Info */}
+                <Link
+                  href={`/dashboard/cotizaciones/${q.id}`}
+                  className="flex-1 min-w-0"
+                >
+                  <p className="font-bold text-slate-900 text-[15px] truncate">
+                    {q.clients?.full_name ?? "Sin cliente"}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    #{q.quote_number} · {formatDate(q.created_at)}
+                  </p>
+                </Link>
+
+                {/* Total */}
+                <p className="font-black text-slate-900 text-lg tabular-nums whitespace-nowrap">
+                  {formatUSD(q.total)}
+                </p>
+              </div>
+
+              {/* Footer: Status + Acción */}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-50">
+                <span
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold ${BG[q.status]} ${TX[q.status]}`}
+                >
+                  {LABEL[q.status]}
+                </span>
+
+                {q.status !== "accepted" && q.status !== "rejected" ? (
+                  <button
+                    onClick={() => markAsSold(q.id)}
+                    disabled={updatingId === q.id}
+                    className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {updatingId === q.id ? (
+                      <span className="animate-pulse">...</span>
+                    ) : (
+                      <>
+                        ✅ Marcar como Confirmada
+                      </>
+                    )}
+                  </button>
+                ) : q.status === "accepted" ? (
+                  <span className="text-xs font-bold text-green-600">
+                    🟢 Confirmada
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
