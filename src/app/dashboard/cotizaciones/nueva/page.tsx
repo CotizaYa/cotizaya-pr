@@ -14,6 +14,7 @@ interface Product {
   base_price: number;
   unit_label: string | null;
   is_active: boolean;
+  imagen_url?: string | null;
 }
 
 interface QuoteItem {
@@ -57,7 +58,7 @@ export default function NuevaCotizacionPage() {
       const [productsRes, pricesRes] = await Promise.all([
         supabase
           .from("products")
-          .select("*")
+          .select("id, code, name, category, price_type, base_price, unit_label, is_active, imagen_url")
           .or(`owner_id.is.null,owner_id.eq.${user.id}`)
           .eq("is_active", true)
           .order("category")
@@ -199,14 +200,27 @@ export default function NuevaCotizacionPage() {
                     <button
                       key={product.id}
                       onClick={() => setSelectedProduct(product)}
-                      className="flex flex-col items-center justify-center p-4 bg-white border-2 border-gray-200 rounded-2xl hover:border-[#F97316] hover:bg-orange-50 active:scale-95 transition-all shadow-md"
+                      className="flex flex-col items-center justify-center p-4 bg-white border-2 border-gray-200 rounded-2xl hover:border-[#F97316] hover:bg-orange-50 active:scale-95 transition-all shadow-md gap-3"
                     >
-                      <p className="text-sm font-bold text-gray-900 text-center line-clamp-2">
-                        {product.name}
-                      </p>
-                      <p className="text-[10px] text-gray-500 font-medium mt-1">
-                        {product.code}
-                      </p>
+                      {product.imagen_url ? (
+                        <img 
+                          src={product.imagen_url} 
+                          alt={product.name}
+                          className="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {product.code?.charAt(0) || "📦"}
+                        </div>
+                      )}
+                      <div className="text-center">
+                        <p className="text-[11px] font-black text-gray-900 line-clamp-2 leading-tight">
+                          {product.name}
+                        </p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">
+                          {product.code}
+                        </p>
+                      </div>
                     </button>
                   );
                 })}
