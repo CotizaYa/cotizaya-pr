@@ -111,8 +111,8 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
                   <div style={{ width:"3px", height:"16px", background:"#f97316", borderRadius:"2px" }} />
                   <span style={{ fontSize:"11px", fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:"#f97316" }}>{CAT[cat] ?? cat}</span>
                 </div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 80px 60px 90px", gap:"8px", padding:"6px 12px", background:"#f8f8f8", borderRadius:"8px", marginBottom:"4px" }}>
-                  {["Descripción","Precio/u.","Cant.","Total"].map((h,i) => (
+                <div style={{ display:"grid", gridTemplateColumns:"60px 1fr 80px 60px 90px", gap:"8px", padding:"6px 12px", background:"#f8f8f8", borderRadius:"8px", marginBottom:"4px" }}>
+                  {["Imagen","Descripción","Precio/u.","Cant.","Total"].map((h,i) => (
                     <span key={h} style={{ fontSize:"10px", fontWeight:700, color:"#a3a3a3", textTransform:"uppercase", letterSpacing:"0.5px", textAlign:i>0?"right":"left" }}>{h}</span>
                   ))}
                 </div>
@@ -122,7 +122,15 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
                   if (item.metadata?.color) details.push(item.metadata.color);
                   if (item.metadata?.tipo_vidrio) details.push(item.metadata.tipo_vidrio);
                   return (
-                    <div key={item.id} style={{ display:"grid", gridTemplateColumns:"1fr 80px 60px 90px", gap:"8px", padding:"10px 12px", borderBottom:idx<items.length-1?"1px solid #f5f5f5":"none", alignItems:"center" }}>
+                    <div key={item.id} style={{ display:"grid", gridTemplateColumns:"60px 1fr 80px 60px 90px", gap:"8px", padding:"10px 12px", borderBottom:idx<items.length-1?"1px solid #f5f5f5":"none", alignItems:"center" }}>
+                      {/* Imagen del Producto */}
+                      <div style={{ width:"50px", height:"50px", borderRadius:"8px", overflow:"hidden", background:"#f0f0f0", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        {item.product_snapshot?.imagen_url ? (
+                          <img src={item.product_snapshot.imagen_url} alt={item.name_snapshot} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                        ) : (
+                          <span style={{ fontSize:"24px" }}>📦</span>
+                        )}
+                      </div>
                       <div>
                         <p style={{ fontSize:"13px", fontWeight:500, color:"#1a1a2e" }}>{item.name_snapshot}</p>
                         {details.length > 0 && <p style={{ fontSize:"11px", color:"#a3a3a3", marginTop:"2px" }}>{details.join(" · ")}</p>}
@@ -132,7 +140,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
                       <p style={{ fontSize:"13px", fontWeight:600, color:"#1a1a2e", textAlign:"right" }}>{formatUSD(item.line_total)}</p>
                     </div>
                   );
-                })}
+                })
               </div>
             ))}
 
