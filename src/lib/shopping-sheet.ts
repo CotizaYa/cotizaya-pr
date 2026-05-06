@@ -6,12 +6,17 @@
 export interface ProfileItem {
   profileType: string; // 'marco_lateral', 'marco_superior', 'vareta', etc.
   profileSize: string; // '1/2 x 1/2', '3/4 x 3/4', etc.
-  lengthInches: number;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  lengthInches: number; // Longitud de cada pieza individual
+  quantity: number; // Cantidad de piezas de esa longitud
+  unitPrice: number; // Precio por pulgada lineal del perfil
   color?: string;
   finish?: string; // 'natural', 'anodizado', 'pintura'
+}
+
+export interface OptimizedProfileItem extends ProfileItem {
+  totalPrice: number; // Precio total de todas las piezas de este tipo
+  stockLengthUsed: number; // Cantidad de barras de stock utilizadas para este perfil
+  wasteInches: number; // Desperdicio total en pulgadas para este perfil
 }
 
 export const formatUSD = (amount: number) => {
@@ -26,7 +31,8 @@ export interface ShoppingSheet {
   date: Date;
   totalLinearFeet: number;
   totalCost: number;
-  profileItems: ProfileItem[];
+  profileItems: OptimizedProfileItem[]; // Ahora usa OptimizedProfileItem
+  totalWasteInches: number; // Desperdicio total en pulgadas
   wastePercentage: number; // Porcentaje de desperdicio estimado
   optimizationNotes: string[];
   cuttingSheetUrl?: string;
@@ -51,10 +57,9 @@ export function calculateProfilesNeeded(
     profiles.push({
       profileType: 'Marco Lateral',
       profileSize: '1 x 1',
-      lengthInches: h * 2,
+      lengthInches: h,
       quantity: 2,
       unitPrice: 2.5,
-      totalPrice: h * 2 * 2 * 2.5,
       finish: 'anodizado',
     });
 
@@ -65,7 +70,6 @@ export function calculateProfilesNeeded(
       lengthInches: w,
       quantity: 1,
       unitPrice: 2.5,
-      totalPrice: w * 1 * 2.5,
       finish: 'anodizado',
     });
 
@@ -76,7 +80,6 @@ export function calculateProfilesNeeded(
       lengthInches: w,
       quantity: 1,
       unitPrice: 2.5,
-      totalPrice: w * 1 * 2.5,
       finish: 'anodizado',
     });
 
@@ -87,7 +90,6 @@ export function calculateProfilesNeeded(
       lengthInches: h,
       quantity: 1,
       unitPrice: 1.8,
-      totalPrice: h * 1 * 1.8,
       finish: 'anodizado',
     });
   } else if (productType === 'ventana') {
@@ -95,10 +97,17 @@ export function calculateProfilesNeeded(
     profiles.push({
       profileType: 'Marco',
       profileSize: '3/4 x 3/4',
-      lengthInches: (w + h) * 2,
-      quantity: 1,
+      lengthInches: w,
+      quantity: 2,
       unitPrice: 1.8,
-      totalPrice: (w + h) * 2 * 1.8,
+      finish: 'anodizado',
+    });
+    profiles.push({
+      profileType: 'Marco',
+      profileSize: '3/4 x 3/4',
+      lengthInches: h,
+      quantity: 2,
+      unitPrice: 1.8,
       finish: 'anodizado',
     });
 
@@ -106,10 +115,9 @@ export function calculateProfilesNeeded(
     profiles.push({
       profileType: 'Vareta Horizontal',
       profileSize: '1/2 x 1/2',
-      lengthInches: w * 2,
+      lengthInches: w,
       quantity: 2,
       unitPrice: 1.2,
-      totalPrice: w * 2 * 2 * 1.2,
       finish: 'anodizado',
     });
   } else if (productType === 'screen') {
@@ -117,23 +125,31 @@ export function calculateProfilesNeeded(
     profiles.push({
       profileType: 'Marco Exterior',
       profileSize: '1 x 1',
-      lengthInches: (w + h) * 2,
-      quantity: 1,
+      lengthInches: w,
+      quantity: 2,
       unitPrice: 2.0,
-      totalPrice: (w + h) * 2 * 2.0,
+      finish: 'natural',
+    });
+    profiles.push({
+      profileType: 'Marco Exterior',
+      profileSize: '1 x 1',
+      lengthInches: h,
+      quantity: 2,
+      unitPrice: 2.0,
       finish: 'natural',
     });
 
     // Malla
-    profiles.push({
-      profileType: 'Malla Fiberglass',
-      profileSize: 'Regular',
-      lengthInches: w * h,
-      quantity: 1,
-      unitPrice: 0.15,
-      totalPrice: w * h * 0.15,
-      finish: 'gris',
-    });
+    // Malla no es un perfil lineal, se calcula diferente.
+    // Por ahora, no la incluimos en la optimización de corte de perfiles.
+    // profiles.push({
+    //   profileType: 'Malla Fiberglass',
+    //   profileSize: 'Regular',
+    //   lengthInches: w * h,
+    //   quantity: 1,
+    //   unitPrice: 0.15,
+    //   finish: 'gris',
+    // });
   }
 
   return profiles;
@@ -143,46 +159,88 @@ export function calculateProfilesNeeded(
  * Optimiza los perfiles para minimizar desperdicio
  */
 export function optimizeProfiles(profiles: ProfileItem[]): {
-  optimized: ProfileItem[];
+  optimized: OptimizedProfileItem[];
+  totalWasteInches: number;
   wastePercentage: number;
   notes: string[];
 } {
+  const STANDARD_STOCK_LENGTH_INCHES = 240; // 20 pies * 12 pulgadas/pie
+  const SAW_KERF_INCHES = 0.125; // 1/8 de pulgada por corte de sierra
+
   const notes: string[] = [];
-  let totalLinearFeet = 0;
-  let wastePercentage = 0;
+  let totalOverallRequiredLength = 0; // Suma de todas las longitudes de corte solicitadas
+  let totalOverallStockUsedLength = 0; // Suma de todas las longitudes de stock utilizadas
+  let totalOverallWasteInches = 0; // Suma de todo el desperdicio
+  let totalOverallCost = 0; // Costo total de los perfiles
 
-  // Agrupar perfiles del mismo tipo y tamaño
-  const grouped = profiles.reduce(
-    (acc, profile) => {
-      const key = `${profile.profileType}_${profile.profileSize}`;
-      if (!acc[key]) {
-        acc[key] = { ...profile, quantity: 0, lengthInches: 0, totalPrice: 0 };
-      }
-      acc[key].quantity += profile.quantity;
-      acc[key].lengthInches += profile.lengthInches;
-      acc[key].totalPrice += profile.totalPrice;
-      return acc;
-    },
-    {} as Record<string, ProfileItem>
-  );
+  // 1. Agrupar perfiles por tipo, tamaño, color y acabado
+  const groupedProfiles: Record<string, { profile: ProfileItem; cutLengths: number[] }> = {};
 
-  const optimized = Object.values(grouped);
-
-  // Calcular desperdicio estimado
-  optimized.forEach((profile) => {
-    const standardLength = 20; // 20 pies estándar
-    const needed = profile.lengthInches / 12; // Convertir a pies
-    const waste = (needed % standardLength) / standardLength;
-    wastePercentage += waste * 10; // Aproximación
+  profiles.forEach(p => {
+    const key = `${p.profileType}-${p.profileSize}-${p.color || ''}-${p.finish || ''}`;
+    if (!groupedProfiles[key]) {
+      groupedProfiles[key] = { profile: { ...p, quantity: 0 }, cutLengths: [] };
+    }
+    for (let i = 0; i < p.quantity; i++) {
+      groupedProfiles[key].cutLengths.push(p.lengthInches);
+      groupedProfiles[key].profile.quantity++;
+    }
+    totalOverallRequiredLength += p.lengthInches * p.quantity;
   });
 
-  wastePercentage = Math.min(wastePercentage / optimized.length, 25); // Máximo 25%
+  const optimizedProfiles: OptimizedProfileItem[] = [];
 
-  notes.push(`✓ Perfiles agrupados para minimizar desperdicio`);
-  notes.push(`✓ Desperdicio estimado: ${wastePercentage.toFixed(1)}%`);
-  notes.push(`✓ Recomendación: Comprar con ${Math.ceil(wastePercentage)}% de margen adicional`);
+  for (const key in groupedProfiles) {
+    const { profile, cutLengths } = groupedProfiles[key];
+    const sortedCutLengths = [...cutLengths].sort((a, b) => b - a); // Ordenar de mayor a menor
 
-  return { optimized, wastePercentage, notes };
+    let stockPiecesUsed = 0;
+    let currentStockRemaining = 0;
+    let currentProfileWasteInches = 0;
+    let currentProfileTotalPrice = 0;
+
+    // Implementación del algoritmo First Fit Decreasing (FFD)
+    while (sortedCutLengths.length > 0) {
+      stockPiecesUsed++;
+      currentStockRemaining = STANDARD_STOCK_LENGTH_INCHES;
+      notes.push(`Iniciando nueva barra de ${STANDARD_STOCK_LENGTH_INCHES}" para ${profile.profileType} ${profile.profileSize}`);
+
+      let i = 0;
+      while (i < sortedCutLengths.length) {
+        const cut = sortedCutLengths[i];
+        // Considerar el espacio del corte de sierra
+        if (cut + SAW_KERF_INCHES <= currentStockRemaining) {
+          currentStockRemaining -= (cut + SAW_KERF_INCHES);
+          currentProfileTotalPrice += (cut / 12) * profile.unitPrice; // Precio por pulgada lineal
+          notes.push(`  Cortando ${cut}" (restante: ${currentStockRemaining.toFixed(2)}")`);
+          sortedCutLengths.splice(i, 1); // Remover la pieza cortada
+        } else {
+          i++; // Intentar con la siguiente pieza
+        }
+      }
+      totalOverallStockUsedLength += STANDARD_STOCK_LENGTH_INCHES;
+      currentProfileWasteInches += currentStockRemaining; // El restante es desperdicio de esta barra
+      notes.push(`  Desperdicio en esta barra: ${currentStockRemaining.toFixed(2)}"`);
+    }
+
+    optimizedProfiles.push({
+      ...profile,
+      totalPrice: currentProfileTotalPrice,
+      stockLengthUsed: stockPiecesUsed,
+      wasteInches: currentProfileWasteInches,
+    });
+    totalOverallWasteInches += currentProfileWasteInches;
+    totalOverallCost += currentProfileTotalPrice;
+  }
+
+  const finalTotalLinearFeet = totalOverallRequiredLength / 12;
+  const wastePercentage = totalOverallStockUsedLength > 0 ? (totalOverallWasteInches / totalOverallStockUsedLength) * 100 : 0;
+
+  notes.unshift(`Total de perfiles a cortar: ${totalOverallRequiredLength.toFixed(2)}"`);
+  notes.unshift(`Longitud estándar de stock: ${STANDARD_STOCK_LENGTH_INCHES}"`);
+  notes.unshift(`Ancho de corte de sierra (kerf): ${SAW_KERF_INCHES}"`);
+
+  return { optimized: optimizedProfiles, totalWasteInches: totalOverallWasteInches, wastePercentage, notes };
 }
 
 /**
@@ -199,6 +257,8 @@ export function generateShoppingSheetHTML(sheet: ShoppingSheet): string {
       <td class="px-4 py-3 text-center font-bold text-blue-600">${item.quantity}</td>
       <td class="px-4 py-3 text-right text-gray-700">$${item.unitPrice.toFixed(2)}</td>
       <td class="px-4 py-3 text-right font-bold text-green-600">$${item.totalPrice.toFixed(2)}</td>
+      <td class="px-4 py-3 text-center text-gray-700">${item.stockLengthUsed}</td>
+      <td class="px-4 py-3 text-right text-red-600">${item.wasteInches.toFixed(2)}"</td>
     </tr>
   `
     )

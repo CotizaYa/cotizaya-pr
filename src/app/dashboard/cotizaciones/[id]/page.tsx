@@ -41,25 +41,33 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
   const waPhone = client?.phone?.replace(/\D/g,"");
   const waUrl = waPhone ? `https://wa.me/1${waPhone}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
 
-  // Generar Hoja de Compra para el primer producto (Demo)
-  const firstItem = items?.[0];
+  // Generar Hoja de Compra para todos los productos de la cotización
   let shoppingSheet = null;
-  if (firstItem) {
-    const profiles = calculateProfilesNeeded(
-      firstItem.width_inches || 36,
-      firstItem.height_inches || 80,
-      (firstItem.category_snapshot || 'puerta') as any
-    );
-    const { optimized, wastePercentage, notes } = optimizeProfiles(profiles);
-    shoppingSheet = {
-      quoteId: id,
-      date: new Date(quote.created_at),
-      totalLinearFeet: optimized.reduce((acc, p) => acc + (p.lengthInches / 12), 0),
-      totalCost: optimized.reduce((acc, p) => acc + p.totalPrice, 0),
-      profileItems: optimized,
-      wastePercentage,
-      optimizationNotes: notes,
-    };
+  if (items && items.length > 0) {
+    let allProfiles: ProfileItem[] = [];
+    for (const item of items) {
+      if (item.width_inches && item.height_inches && item.category_snapshot) {
+        const itemProfiles = calculateProfilesNeeded(
+          item.width_inches,
+          item.height_inches,
+          item.category_snapshot as any
+        );
+        allProfiles = allProfiles.concat(itemProfiles);
+      }
+    }
+
+    if (allProfiles.length > 0) {
+      const { optimized, wastePercentage, notes } = optimizeProfiles(allProfiles);
+      shoppingSheet = {
+        quoteId: id,
+        date: new Date(quote.created_at),
+        totalLinearFeet: optimized.reduce((acc, p) => acc + (p.lengthInches / 12), 0),
+        totalCost: optimized.reduce((acc, p) => acc + p.totalPrice, 0),
+        profileItems: optimized,
+        wastePercentage,
+        optimizationNotes: notes,
+      };
+    }
   }
 
   return (

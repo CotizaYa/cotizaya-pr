@@ -42,6 +42,8 @@ export function VisualShoppingSheet({ sheet }: VisualShoppingSheetProps) {
                 <th className="py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Perfil / Icono</th>
                 <th className="py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Cant.</th>
                 <th className="py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Longitud</th>
+                <th className="py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Barras</th>
+                <th className="py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Desperdicio</th>
                 <th className="py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Total</th>
               </tr>
             </thead>
@@ -65,7 +67,13 @@ export function VisualShoppingSheet({ sheet }: VisualShoppingSheetProps) {
                     </span>
                   </td>
                   <td className="py-4 text-sm font-medium text-gray-600">
-                    {item.lengthInches.toFixed(1)}"
+                    {item.lengthInches.toFixed(1)}" x {item.quantity}
+                  </td>
+                  <td className="py-4 text-center text-sm font-bold text-gray-900">
+                    {item.stockLengthUsed}
+                  </td>
+                  <td className="py-4 text-right text-sm font-bold text-red-600">
+                    {item.wasteInches.toFixed(1)}"
                   </td>
                   <td className="py-4 text-right text-sm font-bold text-gray-900">
                     {formatUSD(item.totalPrice)}
