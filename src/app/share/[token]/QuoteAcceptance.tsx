@@ -1,13 +1,15 @@
 "use client";
 import { useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { ScheduleInstallationModal } from "@/components/quote/ScheduleInstallationModal";
 
 export function QuoteAcceptance({ token }: { token: string }) {
-  const [step, setStep] = useState<"idle"|"accept"|"reject"|"done">("idle");
+  const [step, setStep] = useState<"idle"|"accept"|"reject"|"done"|"schedule">("idle");
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
   const [result, setResult] = useState<"accepted"|"rejected"|null>(null);
   const [pending, start] = useTransition();
+  const [quoteData, setQuoteData] = useState<any>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
@@ -31,9 +33,20 @@ export function QuoteAcceptance({ token }: { token: string }) {
 
   function accept() {
     start(async () => {
-      const sig = canvasRef.current?.toDataURL() ?? "";
-      await createClient().rpc("log_quote_event", { p_token:token, p_event:"accepted", p_payload:{name,signature:sig} });
-      setResult("accepted"); setStep("done");
+      try {
+        const sig = canvasRef.current?.toDataURL() ?? "";
+        // Obtener datos de la cotización
+        const { data } = await createClient().rpc("get_public_quote", { p_token: token });
+        setQuoteData(data);
+        // Registrar aceptación
+        await createClient().rpc("log_quote_event", { p_token:token, p_event:"accepted", p_payload:{name,signature:sig} });
+        setResult("accepted"); 
+        setStep("schedule");
+      } catch (error) {
+        console.error("Error al aceptar cotización:", error);
+        setResult("accepted");
+        setStep("done");
+      }
     });
   }
   function reject() {
@@ -43,17 +56,31 @@ export function QuoteAcceptance({ token }: { token: string }) {
     });
   }
 
+  // Paso 4: Programar Instalación
+  if (step === "schedule" && quoteData) {
+    return (
+      <ScheduleInstallationModal
+        quoteId={quoteData.id}
+        clientId={quoteData.client_id}
+        onClose={() => setStep("done")}
+        onSuccess={() => setStep("done")}
+      />
+    );
+  }
+
+  // Paso Final: Confirmación
   if (step === "done") return (
     <div style={{ background:result==="accepted"?"#dcfce7":"#fee2e2", border:`1px solid ${result==="accepted"?"#86efac":"#fca5a5"}`, borderRadius:"12px", padding:"20px", textAlign:"center" }}>
       <p style={{ margin:0, fontSize:"16px", fontWeight:700, color:result==="accepted"?"#15803d":"#dc2626" }}>
         {result==="accepted" ? "✓ Cotización aprobada" : "Cotización rechazada"}
       </p>
       <p style={{ margin:"6px 0 0", fontSize:"13px", color:result==="accepted"?"#166534":"#b91c1c" }}>
-        {result==="accepted" ? "El contratista recibirá una notificación." : "El contratista fue notificado."}
+        {result==="accepted" ? "El contratista recibirá una notificación y procederá con la instalación." : "El contratista fue notificado."}
       </p>
     </div>
   );
 
+  // Paso 1: Menú Principal
   if (step === "idle") return (
     <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
       <button onClick={()=>setStep("accept")} style={{ background:"#f97316", color:"white", border:"none", borderRadius:"12px", padding:"14px", fontSize:"14px", fontWeight:700, cursor:"pointer" }}>
@@ -65,6 +92,7 @@ export function QuoteAcceptance({ token }: { token: string }) {
     </div>
   );
 
+  // Paso 2: Aceptar con Firma
   if (step === "accept") return (
     <div style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", padding:"16px" }}>
       <p style={{ margin:"0 0 12px", fontSize:"14px", fontWeight:700, color:"#171717" }}>Aprobar cotización</p>
@@ -90,6 +118,7 @@ export function QuoteAcceptance({ token }: { token: string }) {
     </div>
   );
 
+  // Paso 3: Rechazar
   return (
     <div style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", padding:"16px" }}>
       <p style={{ margin:"0 0 10px", fontSize:"14px", fontWeight:700, color:"#171717" }}>¿Por qué rechaza?</p>
