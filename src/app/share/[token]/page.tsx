@@ -60,13 +60,14 @@ export default async function CotizacionPublicaPage({ params }: PageProps) {
   const statusInfo = STATUS_LABEL[quote.status] ?? STATUS_LABEL.sent
   const ivu_pct = Math.round(Number(quote.ivu_rate ?? 0.115) * 100)
 
-  // WhatsApp
+  // WhatsApp — siempre visible para cierre de venta
   const waMsg = encodeURIComponent(
     `Hola ${contratista?.business_name ?? 'CotizaYa'}, vi la cotización ${quote.quote_number} por ${fmt(quote.total)} y me interesa proceder.`
   )
-  const waUrl = contratista?.phone
-    ? `https://wa.me/1${contratista.phone.replace(/\D/g, '')}?text=${waMsg}`
-    : null
+  const rawPhone = contratista?.phone?.replace(/\D/g, '') || ''
+  const waUrl = rawPhone
+    ? `https://wa.me/1${rawPhone}?text=${waMsg}`
+    : `https://wa.me/?text=${waMsg}`
 
   // Agrupar items por categoría
   const grouped: Record<string, any[]> = {}
