@@ -137,20 +137,29 @@ export default function NuevaCotizacionPage() {
     if (!user || quoteItems.length === 0) return;
 
     setIsSaving(true);
-    const subtotal = quoteItems.reduce((sum, item) => sum + item.line_total, 0);
-    const ivu = subtotal * 0.115;
-    const total = subtotal + ivu;
+    const subtotalVal = quoteItems.reduce((sum, item) => sum + item.line_total, 0);
+    const ivu = subtotalVal * 0.115;
+    const total = subtotalVal + ivu;
+
+    // Generar quote_number único: COT-YYYY-NNN
+    const year = new Date().getFullYear();
+    const rand = Math.floor(Math.random() * 900) + 100;
+    const quoteNumber = `COT-${year}-${rand}`;
 
     const { data: quote, error } = await supabase
       .from("quotes")
       .insert({
-        user_id: user.id,
+        owner_id: user.id,
+        quote_number: quoteNumber,
         status: "draft",
-        subtotal,
+        subtotal_materials: subtotalVal,
+        subtotal_labor: 0,
         ivu_amount: ivu,
         ivu_rate: 0.115,
         total,
+        deposit_rate: 0.50,
         deposit_amount: total * 0.5,
+        balance_amount: total * 0.5,
       })
       .select()
       .single();
@@ -166,11 +175,15 @@ export default function NuevaCotizacionPage() {
         quote_id: quote.id,
         product_id: item.product_id,
         product_snapshot: item.product_snapshot,
+        name_snapshot: item.product_snapshot.name,
+        category_snapshot: item.product_snapshot.category || "miscelanea",
+        price_type_snapshot: item.product_snapshot.price_type,
+        unit_price_snapshot: item.product_snapshot.base_price,
         width_inches: item.width_inches,
         height_inches: item.height_inches,
         quantity: item.quantity,
-        color: item.color,
         line_total: item.line_total,
+        metadata: { color: item.color },
         position: index,
       }))
     );

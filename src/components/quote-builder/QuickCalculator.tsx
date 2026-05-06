@@ -8,6 +8,7 @@ interface QuickCalculatorProps {
     id: string;
     code: string | null;
     name: string;
+    category: string;
     price_type: string;
     base_price: number;
   };
@@ -66,6 +67,7 @@ export function QuickCalculator({ product, userPrice, onAddToQuote }: QuickCalcu
       product_snapshot: {
         code: product.code,
         name: product.name,
+        category: product.category,
         price_type: product.price_type,
         base_price: product.base_price,
       },
