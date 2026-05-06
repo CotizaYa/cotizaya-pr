@@ -173,16 +173,15 @@ export default function NuevaCotizacionPage() {
       quoteItems.map((item, index) => ({
         quote_id: quote.id,
         product_id: item.product_id,
-        product_snapshot: item.product_snapshot,
         name_snapshot: item.product_snapshot.name,
         category_snapshot: item.product_snapshot.category || "miscelanea",
-        price_type_snapshot: item.product_snapshot.price_type,
+        price_type_snapshot: item.product_snapshot.price_type || "sqft",
         unit_price_snapshot: item.product_snapshot.base_price,
         width_inches: item.width_inches,
         height_inches: item.height_inches,
         quantity: item.quantity,
         line_total: item.line_total,
-        metadata: { color: item.color },
+        metadata: { color: item.color, product_snapshot: item.product_snapshot },
         position: index,
       }))
     );
