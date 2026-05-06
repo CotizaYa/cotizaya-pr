@@ -159,7 +159,6 @@ export default function NuevaCotizacionPage() {
         total,
         deposit_rate: 0.50,
         deposit_amount: total * 0.5,
-        balance_amount: total * 0.5,
       })
       .select()
       .single();
