@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 import {
   Home,
   FileText,
@@ -69,7 +69,7 @@ const NAV_GROUPS = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [profile, setProfile] = useState<{ full_name?: string; business_name?: string; email?: string; avatar_url?: string } | null>(null)
   const [unreadNotifs, setUnreadNotifs] = useState(0)
   const [pendingQuotes, setPendingQuotes] = useState(0)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 import { Plus, Loader2, Scissors, ArrowRight, AlertCircle } from 'lucide-react'
 
 interface CutSheet {
@@ -23,7 +23,7 @@ const statusConfig = {
 }
 
 export default function CortePage() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [sheets, setSheets] = useState<CutSheet[]>([])
   const [loading, setLoading] = useState(true)
 

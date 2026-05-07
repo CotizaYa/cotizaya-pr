@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 import { BarChart3, TrendingUp, Users, DollarSign, Loader2, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ReportesPage() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [stats, setStats] = useState({
     totalQuotes: 0,
     acceptedQuotes: 0,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 import { Plus, X, Loader2, Trash2, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 
 interface ProductionEvent {
@@ -23,7 +23,7 @@ const statusConfig = {
 }
 
 export default function CalendarioPage() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [events, setEvents] = useState<ProductionEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)

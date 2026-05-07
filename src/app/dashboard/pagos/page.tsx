@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase/client'
 import { Plus, Loader2, Link as LinkIcon, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 
 interface Payment {
@@ -20,7 +20,7 @@ const statusConfig = {
 }
 
 export default function PagosPage() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
 
