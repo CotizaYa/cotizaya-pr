@@ -90,7 +90,7 @@ export default async function PreciosPage() {
 
       {/* Flotante de Ayuda Mobile */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap z-20">
-        <span className="text-[#F97316]">💡</span> Los precios se guardan al salir del campo
+        <span className="text-[#F97316]"></span> Los precios se guardan al salir del campo
       </div>
     </div>
   );

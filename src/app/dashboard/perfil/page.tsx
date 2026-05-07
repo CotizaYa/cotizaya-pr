@@ -20,7 +20,7 @@ export default async function PerfilPage() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "640px", margin: "0 auto" }}>
-      <h1 style={{ margin: "0 0 4px", fontSize: "22px", fontWeight: 800, color: "#171717" }}>⚙️ Configuración</h1>
+      <h1 style={{ margin: "0 0 4px", fontSize: "22px", fontWeight: 800, color: "#171717" }}> Configuración</h1>
       <p style={{ margin: "0 0 24px", fontSize: "13px", color: "#737373" }}>Perfil y ajustes de tu cuenta</p>
 
       {/* Business info */}
@@ -41,11 +41,11 @@ export default async function PerfilPage() {
       {/* Anthropic API Key */}
       <div style={{ background: "white", border: "1px solid #e5e5e5", borderRadius: "14px", padding: "20px", marginBottom: "16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-          <span style={{ fontSize: "24px" }}>🤖</span>
+          <span style={{ fontSize: "24px" }}></span>
           <div>
             <p style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#171717" }}>Asistente IA — API Key de Anthropic</p>
             <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#737373" }}>
-              {hasKey ? "✅ Asistente activado" : "⚠️ Sin API Key — Asistente desactivado"}
+              {hasKey ? " Asistente activado" : " Sin API Key — Asistente desactivado"}
             </p>
           </div>
         </div>
@@ -61,7 +61,7 @@ export default async function PerfilPage() {
             <li>Copia la key y pégala aquí abajo</li>
           </ol>
           <p style={{ margin: "8px 0 0", fontSize: "11px", color: "#3b82f6" }}>
-            💡 Costo aproximado: $0.02–$0.04 por conversación · $5 dura ~150–200 consultas
+             Costo aproximado: $0.02–$0.04 por conversación · $5 dura ~150–200 consultas
           </p>
         </div>
 

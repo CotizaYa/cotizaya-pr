@@ -92,7 +92,7 @@ export default function ChatbotPage() {
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-8">
           <h1 className="text-3xl font-black text-slate-900">
-            🤖 Chatbot de <span className="text-[#f97316]">Seguimiento</span>
+             Chatbot de <span className="text-[#f97316]">Seguimiento</span>
           </h1>
           <p className="text-slate-500 font-medium mt-2">
             Configura tu asistente automático de cotizaciones
@@ -103,7 +103,7 @@ export default function ChatbotPage() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         {!hasAccess ? (
           <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-12 border-2 border-[#f97316] text-center">
-            <div className="text-6xl mb-4">🔒</div>
+            <div className="text-6xl mb-4"></div>
             <h2 className="text-2xl font-black text-slate-900 mb-2">
               Función Exclusiva Pro
             </h2>
@@ -141,7 +141,7 @@ export default function ChatbotPage() {
               {settings.enabled && (
                 <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
                   <p className="text-sm text-green-700 font-medium">
-                    ✓ Tu chatbot enviará mensajes automáticos el 1º de cada mes a tus clientes.
+                     Tu chatbot enviará mensajes automáticos el 1º de cada mes a tus clientes.
                   </p>
                 </div>
               )}
@@ -233,12 +233,12 @@ export default function ChatbotPage() {
 
             {/* Info Box */}
             <div className="bg-blue-50 rounded-3xl p-8 border-2 border-blue-200">
-              <h3 className="font-bold text-blue-900 mb-3">💡 Cómo funciona</h3>
+              <h3 className="font-bold text-blue-900 mb-3"> Cómo funciona</h3>
               <ul className="space-y-2 text-sm text-blue-800">
-                <li>✓ El 1º de cada mes, tu chatbot envía un mensaje a cada cliente</li>
-                <li>✓ El cliente puede responder "SÍ", "NO" o proporcionar medidas</li>
-                <li>✓ Si responde "SÍ", se crea una cotización automáticamente</li>
-                <li>✓ Recibes una notificación de cada interacción</li>
+                <li> El 1º de cada mes, tu chatbot envía un mensaje a cada cliente</li>
+                <li> El cliente puede responder "SÍ", "NO" o proporcionar medidas</li>
+                <li> Si responde "SÍ", se crea una cotización automáticamente</li>
+                <li> Recibes una notificación de cada interacción</li>
               </ul>
             </div>
           </div>

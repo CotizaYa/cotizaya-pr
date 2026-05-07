@@ -28,7 +28,7 @@ export function NewClientForm() {
   if (!open) return (
     <button onClick={()=>setOpen(true)}
       style={{ background:"#f97316", color:"white", border:"none", borderRadius:"12px", padding:"8px 16px", fontSize:"13px", fontWeight:700, cursor:"pointer" }}>
-      ✚ Nuevo Cliente
+       Nuevo Cliente
     </button>
   );
 

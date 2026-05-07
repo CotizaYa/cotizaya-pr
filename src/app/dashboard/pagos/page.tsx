@@ -117,7 +117,7 @@ export default function PagosPage() {
       
       <div className="bg-blue-600 p-8 rounded-3xl text-white flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
-          <h3 className="text-xl font-black mb-1">Soporte para ATH Móvil Business 🇵🇷</h3>
+          <h3 className="text-xl font-black mb-1">Soporte para ATH Móvil Business </h3>
           <p className="text-blue-100 text-sm">Conecta tu cuenta para recibir pagos instantáneos de tus clientes en Puerto Rico.</p>
         </div>
         <button className="bg-white text-blue-600 font-black px-8 py-3 rounded-2xl hover:bg-blue-50 transition-colors shadow-lg whitespace-nowrap">

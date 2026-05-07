@@ -10,19 +10,24 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.15.0",
+    "@supabase/auth-helpers-react": "^0.15.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.4",
+    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "lucide-react": "^1.14.0",
     "next": "^15.3.6",
     "openai": "^6.36.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "stripe": "^22.1.0",
+    "tailwind-merge": "^3.5.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/react": "^19",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.19",
     "eslint": "^9",

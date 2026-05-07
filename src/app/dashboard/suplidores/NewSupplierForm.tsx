@@ -3,14 +3,14 @@ import { useState, useTransition } from "react";
 import { createSupplier } from "./actions";
 
 const CATEGORIES = [
-  { value: "aluminio",      label: "🔩 Aluminio / Perfiles" },
-  { value: "vidrio",        label: "🪟 Cristales / Vidrio" },
-  { value: "screen",        label: "🕸️ Screen / Malla" },
-  { value: "herrajes",      label: "🔧 Herrajes y Goznes" },
-  { value: "tornilleria",   label: "⚙️ Tornillería" },
-  { value: "pintura",       label: "🎨 Pintura / Selladores" },
-  { value: "construccion",  label: "🏗️ Materiales de Construcción" },
-  { value: "miscelanea",    label: "📦 Miscelánea" },
+  { value: "aluminio",      label: " Aluminio / Perfiles" },
+  { value: "vidrio",        label: " Cristales / Vidrio" },
+  { value: "screen",        label: " Screen / Malla" },
+  { value: "herrajes",      label: " Herrajes y Goznes" },
+  { value: "tornilleria",   label: " Tornillería" },
+  { value: "pintura",       label: " Pintura / Selladores" },
+  { value: "construccion",  label: " Materiales de Construcción" },
+  { value: "miscelanea",    label: " Miscelánea" },
 ];
 
 export function NewSupplierForm() {
@@ -41,7 +41,7 @@ export function NewSupplierForm() {
   if (!open) return (
     <button onClick={() => setOpen(true)}
       style={{ background: "#f97316", color: "white", border: "none", borderRadius: "12px", padding: "10px 20px", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>
-      ✚ Agregar Suplidor
+       Agregar Suplidor
     </button>
   );
 

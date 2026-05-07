@@ -74,7 +74,7 @@ export default function BuscarFabricantesPage() {
               <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-black text-gray-900 truncate">{fab.business_name || fab.full_name}</h3>
                 <p className="text-sm text-gray-500 font-medium flex items-center gap-1 mt-1">
-                  <span className="text-orange-500">📍</span> {fab.business_address || 'Puerto Rico'}
+                  <span className="text-orange-500"></span> {fab.business_address || 'Puerto Rico'}
                 </p>
                 <div className="flex items-center gap-2 mt-4">
                   <a
@@ -93,7 +93,7 @@ export default function BuscarFabricantesPage() {
         </div>
       ) : query && !loading ? (
         <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-          <p className="text-5xl mb-4">🔍</p>
+          <p className="text-5xl mb-4"></p>
           <h3 className="text-xl font-bold text-gray-900">No encontramos resultados</h3>
           <p className="text-gray-500 mt-2">Intenta con otros términos de búsqueda.</p>
         </div>

@@ -37,7 +37,7 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
     grouped[cat].push(item);
   }
 
-  const waMsg = encodeURIComponent(`Hola ${client?.full_name ?? ""},\n\nLe comparto su estimado.\n\nTotal: ${formatUSD(quote.total)}\nDepósito: ${formatUSD(quote.deposit_amount)}\n\nVer y aprobar: ${shareLink}\n\nGracias 🙏`);
+  const waMsg = encodeURIComponent(`Hola ${client?.full_name ?? ""},\n\nLe comparto su estimado.\n\nTotal: ${formatUSD(quote.total)}\nDepósito: ${formatUSD(quote.deposit_amount)}\n\nVer y aprobar: ${shareLink}\n\nGracias `);
   const waPhone = client?.phone?.replace(/\D/g,"");
   const waUrl = waPhone ? `https://wa.me/1${waPhone}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
 
@@ -86,7 +86,7 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
           {quote.status === "draft" && <MarkSentButton quoteId={id} />}
           <a href={waUrl} target="_blank" rel="noopener noreferrer"
             style={{ background:"#25D366", color:"white", textDecoration:"none", borderRadius:"10px", padding:"8px 14px", fontSize:"13px", fontWeight:700 }}>
-            📱 WhatsApp
+             WhatsApp
           </a>
           <CopyLinkButton link={shareLink} />
         </div>
@@ -115,7 +115,7 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
         {Object.entries(grouped).map(([cat, catItems]) => (
           <div key={cat}>
             <div style={{ background:"#fafafa", padding:"6px 16px", borderBottom:"1px solid #f5f5f5" }}>
-              <span style={{ fontSize:"10px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", color:"#737373" }}>■ {CAT[cat] ?? cat}</span>
+              <span style={{ fontSize:"10px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", color:"#737373" }}> {CAT[cat] ?? cat}</span>
             </div>
             {catItems.map((item:any) => (
               <div key={item.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 16px", borderBottom:"1px solid #fafafa" }}>

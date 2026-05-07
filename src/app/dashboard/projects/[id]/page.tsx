@@ -38,7 +38,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {STATUS_LABEL[project.status]}
             </span>
             <span style={{ fontSize: "12px", color: "#a3a3a3" }}>
-              📐 {Number(project.square_feet).toLocaleString()} pie² · ⭐ {QUALITY_LABEL[project.quality_level]}
+               {Number(project.square_feet).toLocaleString()} pie² ·  {QUALITY_LABEL[project.quality_level]}
             </span>
           </div>
         </div>
@@ -68,7 +68,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div key={phase.id}>
               <div style={{ background: "#fafafa", padding: "8px 18px", borderBottom: "1px solid #f5f5f5", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "#f97316" }}>
-                  ■ {phase.name}
+                   {phase.name}
                 </span>
                 <span style={{ fontSize: "13px", fontWeight: 700, color: "#171717" }}>{formatCurrency(phase.subtotal)}</span>
               </div>

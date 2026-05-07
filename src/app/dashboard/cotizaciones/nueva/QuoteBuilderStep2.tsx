@@ -19,13 +19,13 @@ interface QuoteBuilderStep2Props {
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-  puerta: "🚪",
-  ventana: "🪟",
-  screen: "🛡️",
-  screen_ac: "❄️",
-  closet: "📦",
-  garaje: "🚗",
-  miscelanea: "🔧",
+  puerta: "",
+  ventana: "",
+  screen: "",
+  screen_ac: "",
+  closet: "",
+  garaje: "",
+  miscelanea: "",
 };
 
 const COLORS = [
@@ -48,7 +48,7 @@ export function QuoteBuilderStep2({ product, userPrice }: QuoteBuilderStep2Props
   const [lineTotal, setLineTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // ── CORRECCIÓN 1: useEffect con lógica de cálculo correcta ──
+  //  CORRECCIÓN 1: useEffect con lógica de cálculo correcta 
   useEffect(() => {
     if (product.price_type === "por_unidad") {
       // Para productos por unidad, solo multiplica precio × cantidad
@@ -117,7 +117,7 @@ export function QuoteBuilderStep2({ product, userPrice }: QuoteBuilderStep2Props
     }
   };
 
-  // ── CORRECCIÓN 2: Mostrar cantidad SIEMPRE ──
+  //  CORRECCIÓN 2: Mostrar cantidad SIEMPRE 
   const showMeasures = ["por_pie_cuadrado", "por_pie_lineal"].includes(product.price_type);
   const showQuantity = true; // ← SIEMPRE visible
 
@@ -137,7 +137,7 @@ export function QuoteBuilderStep2({ product, userPrice }: QuoteBuilderStep2Props
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         {/* Resumen del Producto */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 flex items-start gap-3">
-          <span className="text-3xl">{CATEGORY_ICONS[product.category] || "📦"}</span>
+          <span className="text-3xl">{CATEGORY_ICONS[product.category] || ""}</span>
           <div className="flex-1">
             <p className="text-xs font-bold text-gray-900">{product.name}</p>
             <p className="text-[10px] text-gray-400 font-medium mt-1">
@@ -231,7 +231,7 @@ export function QuoteBuilderStep2({ product, userPrice }: QuoteBuilderStep2Props
                 title={name}
               >
                 {color === value && (
-                  <span className="text-white font-bold text-lg">✓</span>
+                  <span className="text-white font-bold text-lg"></span>
                 )}
               </button>
             ))}

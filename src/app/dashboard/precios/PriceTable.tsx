@@ -27,7 +27,7 @@ export function PriceTable({ label, products, priceMap }: { label:string; produc
   return (
     <div style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", overflow:"hidden", marginBottom:"12px" }}>
       <div style={{ background:"#fafafa", borderBottom:"1px solid #e5e5e5", padding:"8px 16px" }}>
-        <span style={{ fontSize:"11px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", color:"#737373" }}>■ {label}</span>
+        <span style={{ fontSize:"11px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", color:"#737373" }}> {label}</span>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"60px 1fr 130px 140px 50px", gap:"8px", padding:"6px 16px", borderBottom:"1px solid #f5f5f5" }}>
         {["Código","Producto","Precio base","Mi precio",""].map(h=>(
@@ -47,7 +47,7 @@ export function PriceTable({ label, products, priceMap }: { label:string; produc
               style={{ width:"90px", border:"1px solid #e5e5e5", borderRadius:"6px", padding:"4px 8px", fontSize:"13px" }} />
           </div>
           <span style={{ fontSize:"12px", fontWeight:600 }}>
-            {saving[p.id] ? <span style={{ color:"#a3a3a3" }}>…</span> : saved[p.id] ? <span style={{ color:"#16a34a" }}>✓</span> : null}
+            {saving[p.id] ? <span style={{ color:"#a3a3a3" }}>…</span> : saved[p.id] ? <span style={{ color:"#16a34a" }}></span> : null}
           </span>
         </div>
       ))}

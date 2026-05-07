@@ -9,12 +9,12 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-  { icon: "📐", label: "Calcular pie²", prompt: "Tengo una ventana de 36 pulgadas de ancho por 48 pulgadas de alto. ¿Cuántos pies cuadrados son y cuánto costaría aproximadamente?" },
-  { icon: "💰", label: "Precios de aluminio", prompt: "¿Cuáles son los precios actuales aproximados del perfil de aluminio para ventanas en Puerto Rico?" },
-  { icon: "🪟", label: "Tipos de vidrio", prompt: "¿Qué tipo de vidrio me recomiendas para una ventana proyectante en Puerto Rico? Explícame las diferencias entre sencillo, templado y laminado." },
-  { icon: "🔩", label: "Materiales screen", prompt: "¿Qué materiales necesito para instalar una puerta de screen estándar de 36x80 pulgadas?" },
-  { icon: "🏗️", label: "Estimado de casa", prompt: "Necesito un estimado rápido para una casa de 1,200 pies cuadrados en Puerto Rico. ¿Por dónde empiezo?" },
-  { icon: "📋", label: "Plantilla de cotización", prompt: "¿Cómo debo estructurar una cotización profesional para un cliente de puertas y ventanas en Puerto Rico?" },
+  { icon: "", label: "Calcular pie²", prompt: "Tengo una ventana de 36 pulgadas de ancho por 48 pulgadas de alto. ¿Cuántos pies cuadrados son y cuánto costaría aproximadamente?" },
+  { icon: "", label: "Precios de aluminio", prompt: "¿Cuáles son los precios actuales aproximados del perfil de aluminio para ventanas en Puerto Rico?" },
+  { icon: "", label: "Tipos de vidrio", prompt: "¿Qué tipo de vidrio me recomiendas para una ventana proyectante en Puerto Rico? Explícame las diferencias entre sencillo, templado y laminado." },
+  { icon: "", label: "Materiales screen", prompt: "¿Qué materiales necesito para instalar una puerta de screen estándar de 36x80 pulgadas?" },
+  { icon: "", label: "Estimado de casa", prompt: "Necesito un estimado rápido para una casa de 1,200 pies cuadrados en Puerto Rico. ¿Por dónde empiezo?" },
+  { icon: "", label: "Plantilla de cotización", prompt: "¿Cómo debo estructurar una cotización profesional para un cliente de puertas y ventanas en Puerto Rico?" },
 ];
 
 const SYSTEM_PROMPT = `Eres el Asistente de CotizaYa PR, una herramienta de IA especializada en ayudar a contratistas de puertas, ventanas y construcción en Puerto Rico.
@@ -41,7 +41,7 @@ export default function AsistentePage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "¡Hola! Soy tu asistente de CotizaYa PR. 👋\n\nPuedo ayudarte con:\n• **Cálculos de cotizaciones** — medidas, precios, materiales\n• **Guía de precios** — rangos actuales del mercado en PR\n• **Recomendaciones técnicas** — vidrios, perfiles, instalación\n• **Estrategias de negocio** — cómo estructurar tus cotizaciones\n\n¿En qué te ayudo hoy?",
+      content: "¡Hola! Soy tu asistente de CotizaYa PR. \n\nPuedo ayudarte con:\n• **Cálculos de cotizaciones** — medidas, precios, materiales\n• **Guía de precios** — rangos actuales del mercado en PR\n• **Recomendaciones técnicas** — vidrios, perfiles, instalación\n• **Estrategias de negocio** — cómo estructurar tus cotizaciones\n\n¿En qué te ayudo hoy?",
       timestamp: new Date(),
     }
   ]);
@@ -99,7 +99,7 @@ export default function AsistentePage() {
     } catch (err) {
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "⚠️ Error de conexión. Verifica tu internet e intenta de nuevo.",
+        content: " Error de conexión. Verifica tu internet e intenta de nuevo.",
         timestamp: new Date(),
       }]);
     } finally {
@@ -154,7 +154,7 @@ export default function AsistentePage() {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "20px",
             boxShadow: "0 2px 8px rgba(249,115,22,0.3)",
-          }}>🤖</div>
+          }}></div>
           <div>
             <h1 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "#171717" }}>
               Asistente CotizaYa PR
@@ -167,7 +167,7 @@ export default function AsistentePage() {
         </div>
         <button onClick={clearChat}
           style={{ background: "none", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "6px 12px", fontSize: "12px", color: "#737373", cursor: "pointer" }}>
-          🗑 Limpiar
+           Limpiar
         </button>
       </div>
 
@@ -219,7 +219,7 @@ export default function AsistentePage() {
                 borderRadius: "10px",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "14px",
-              }}>🤖</div>
+              }}></div>
             )}
             <div style={{
               maxWidth: "72%",
@@ -249,7 +249,7 @@ export default function AsistentePage() {
                 borderRadius: "10px",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "14px",
-              }}>👤</div>
+              }}></div>
             )}
           </div>
         ))}
@@ -263,7 +263,7 @@ export default function AsistentePage() {
               borderRadius: "10px",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: "14px",
-            }}>🤖</div>
+            }}></div>
             <div style={{
               background: "white", border: "1px solid #e5e5e5",
               borderRadius: "18px 18px 18px 4px",
@@ -334,7 +334,7 @@ export default function AsistentePage() {
               transition: "background 0.15s",
               fontSize: "16px",
             }}>
-            {loading ? "⏳" : "➤"}
+            {loading ? "⏳" : ""}
           </button>
         </div>
         <p style={{ margin: "8px 0 0", fontSize: "10px", color: "#a3a3a3", textAlign: "center" }}>

@@ -24,7 +24,7 @@ const PLANS = [
     description: "Para negocios en crecimiento",
     features: [
       "Todo lo de Básico +",
-      "🤖 Chatbot de seguimiento",
+      " Chatbot de seguimiento",
       "Cotizaciones mensuales automáticas",
       "Integración WhatsApp",
       "Hasta 50 clientes activos",
@@ -101,7 +101,7 @@ export default async function PlanesPage() {
                   <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-4 ${
                     plan.highlighted ? "bg-white/20 text-white" : "bg-green-100 text-green-700"
                   }`}>
-                    ✓ Plan Actual
+                     Plan Actual
                   </div>
                 )}
 
@@ -154,7 +154,7 @@ export default async function PlanesPage() {
                       <span className={`text-lg mt-0.5 ${
                         plan.highlighted ? "text-white" : "text-[#f97316]"
                       }`}>
-                        ✓
+                        
                       </span>
                       <span className={`text-sm font-medium ${
                         plan.highlighted ? "text-white/90" : "text-slate-700"

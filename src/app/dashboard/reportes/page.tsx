@@ -80,19 +80,19 @@ export default function ReportesPage() {
 
       <div className="grid md:grid-cols-2 gap-8">
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm h-64 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center text-3xl mb-4">📊</div>
+          <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center text-3xl mb-4"></div>
           <h3 className="font-bold text-gray-900">Cotizaciones por Mes</h3>
           <p className="text-sm text-gray-400 mt-1">Próximamente: Gráficas detalladas de rendimiento mensual.</p>
         </div>
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm h-64 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-3xl mb-4">🏆</div>
+          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-3xl mb-4"></div>
           <h3 className="font-bold text-gray-900">Productos más Vendidos</h3>
           <p className="text-sm text-gray-400 mt-1">Próximamente: Ranking de perfiles y materiales más cotizados.</p>
         </div>
       </div>
       
       <div className="bg-[#0F172A] p-8 rounded-3xl text-white">
-        <h3 className="text-xl font-black mb-4">💡 Insight del Negocio</h3>
+        <h3 className="text-xl font-black mb-4"> Insight del Negocio</h3>
         <p className="text-gray-400 leading-relaxed">
           Tu tasa de conversión es del {stats.totalQuotes > 0 ? Math.round((stats.acceptedQuotes / stats.totalQuotes) * 100) : 0}%. 
           Los fabricantes exitosos en Puerto Rico mantienen una tasa superior al 45% mediante el seguimiento automatizado por WhatsApp. 

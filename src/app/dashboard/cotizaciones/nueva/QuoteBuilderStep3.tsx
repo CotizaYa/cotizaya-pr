@@ -29,13 +29,13 @@ interface Client {
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-  puerta: "🚪",
-  ventana: "🪟",
-  screen: "🛡️",
-  screen_ac: "❄️",
-  closet: "📦",
-  garaje: "🚗",
-  miscelanea: "🔧",
+  puerta: "",
+  ventana: "",
+  screen: "",
+  screen_ac: "",
+  closet: "",
+  garaje: "",
+  miscelanea: "",
 };
 
 export function QuoteBuilderStep3() {
@@ -238,7 +238,7 @@ export function QuoteBuilderStep3() {
                 className="bg-white rounded-2xl p-4 border border-gray-100 flex gap-3"
               >
                 <span className="text-2xl">
-                  {CATEGORY_ICONS[item.product_snapshot.category] || "📦"}
+                  {CATEGORY_ICONS[item.product_snapshot.category] || ""}
                 </span>
                 <div className="flex-1">
                   <p className="text-xs font-bold text-gray-900">
@@ -259,7 +259,7 @@ export function QuoteBuilderStep3() {
                   onClick={() => handleRemoveItem(index)}
                   className="text-red-500 hover:text-red-700 font-bold text-lg"
                 >
-                  ✕
+                  
                 </button>
               </div>
             ))

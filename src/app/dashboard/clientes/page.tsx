@@ -20,7 +20,7 @@ export default async function ClientesPage() {
       <div style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", overflow:"hidden", marginTop:"14px" }}>
         {(!clients || clients.length === 0) ? (
           <div style={{ padding:"40px", textAlign:"center" }}>
-            <p style={{ fontSize:"28px", margin:"0 0 6px" }}>👥</p>
+            <p style={{ fontSize:"28px", margin:"0 0 6px" }}></p>
             <p style={{ fontSize:"13px", color:"#737373" }}>Aún no tienes clientes.</p>
           </div>
         ) : (

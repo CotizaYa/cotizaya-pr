@@ -46,7 +46,7 @@ export function MarginCalculator({
       {/* Margin calculator */}
       <div style={{ background: "white", border: "1px solid #e5e5e5", borderRadius: "14px", padding: "18px" }}>
         <p style={{ margin: "0 0 14px", fontSize: "12px", fontWeight: 700, color: "#525252", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-          💰 Calculadora de Margen
+           Calculadora de Margen
         </p>
 
         <label style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
@@ -79,7 +79,7 @@ export function MarginCalculator({
 
         <button onClick={saveMargin} disabled={pending}
           style={{ width: "100%", background: saved ? "#16a34a" : "#f97316", color: "white", border: "none", borderRadius: "10px", padding: "10px", fontSize: "13px", fontWeight: 700, cursor: "pointer", opacity: pending ? 0.6 : 1 }}>
-          {saved ? "✓ Guardado" : pending ? "Guardando…" : "Guardar Margen"}
+          {saved ? " Guardado" : pending ? "Guardando…" : "Guardar Margen"}
         </button>
       </div>
 
@@ -104,7 +104,7 @@ export function MarginCalculator({
       {/* Delete */}
       <button onClick={handleDelete} disabled={pending}
         style={{ background: "white", border: "1px solid #fecaca", color: "#dc2626", borderRadius: "10px", padding: "10px", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
-        🗑 Eliminar Proyecto
+         Eliminar Proyecto
       </button>
     </div>
   );

@@ -5,7 +5,7 @@ export function CopyLinkButton({ link }: { link: string }) {
   return (
     <button onClick={async () => { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
       style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"10px", padding:"8px 14px", fontSize:"13px", fontWeight:600, color:"#404040", cursor:"pointer" }}>
-      {copied ? "✓ Copiado" : "🔗 Copiar link"}
+      {copied ? " Copiado" : " Copiar link"}
     </button>
   );
 }

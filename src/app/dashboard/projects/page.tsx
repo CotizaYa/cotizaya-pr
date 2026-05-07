@@ -26,18 +26,18 @@ export default async function ProjectsPage() {
     <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#171717" }}>🏗️ Proyectos de Construcción</h1>
+          <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#171717" }}> Proyectos de Construcción</h1>
           <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#737373" }}>{all.length} proyectos · {formatCurrency(totalValue)} en estimados</p>
         </div>
         <Link href="/dashboard/projects/new"
           style={{ background: "#f97316", color: "white", textDecoration: "none", borderRadius: "12px", padding: "10px 18px", fontSize: "13px", fontWeight: 700 }}>
-          ✚ Nuevo Proyecto
+           Nuevo Proyecto
         </Link>
       </div>
 
       {all.length === 0 ? (
         <div style={{ background: "white", border: "1px solid #e5e5e5", borderRadius: "16px", padding: "48px", textAlign: "center" }}>
-          <p style={{ fontSize: "48px", margin: "0 0 12px" }}>🏗️</p>
+          <p style={{ fontSize: "48px", margin: "0 0 12px" }}></p>
           <p style={{ fontSize: "16px", fontWeight: 600, color: "#171717", margin: "0 0 8px" }}>Sin proyectos aún</p>
           <p style={{ fontSize: "13px", color: "#737373", margin: "0 0 20px" }}>Crea tu primer estimado de construcción</p>
           <Link href="/dashboard/projects/new"
@@ -57,9 +57,9 @@ export default async function ProjectsPage() {
                   </span>
                 </div>
                 <div style={{ fontSize: "12px", color: "#737373", marginBottom: "12px", lineHeight: 1.6 }}>
-                  <span>📐 {Number(p.square_feet).toLocaleString()} pie²</span>
+                  <span> {Number(p.square_feet).toLocaleString()} pie²</span>
                   <span style={{ margin: "0 6px" }}>·</span>
-                  <span>⭐ {QUALITY_LABEL[p.quality_level]}</span>
+                  <span> {QUALITY_LABEL[p.quality_level]}</span>
                 </div>
                 <div style={{ borderTop: "1px solid #f5f5f5", paddingTop: "10px" }}>
                   <p style={{ margin: 0, fontSize: "11px", color: "#a3a3a3" }}>Total Estimado</p>

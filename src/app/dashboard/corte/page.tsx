@@ -74,7 +74,7 @@ export default function CortePage() {
         </div>
       ) : sheets.length === 0 ? (
         <div className="bg-white rounded-3xl p-16 text-center border-2 border-dashed border-gray-100">
-          <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">✂️</div>
+          <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl"></div>
           <h3 className="text-xl font-bold text-gray-900">No hay hojas de corte</h3>
           <p className="text-gray-500 mt-2 max-w-sm mx-auto">Crea tu primera hoja de corte para optimizar tus perfiles de aluminio y reducir desperdicio.</p>
           <Link href="/dashboard/corte/nueva" className="mt-6 inline-block bg-gray-900 text-white font-bold px-8 py-3 rounded-xl hover:bg-black transition-colors">
@@ -89,7 +89,7 @@ export default function CortePage() {
               href={`/dashboard/corte/${sheet.id}`}
               className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center gap-6 group"
             >
-              <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📄</div>
+              <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"></div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
                   <h3 className="font-bold text-gray-900 text-lg truncate">{sheet.name || 'Hoja sin nombre'}</h3>
@@ -98,9 +98,9 @@ export default function CortePage() {
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 font-medium">
-                  <span className="flex items-center gap-1">👤 {sheet.client_name || 'Sin cliente'}</span>
-                  <span className="flex items-center gap-1">🛠️ {sheet.material}</span>
-                  <span className="flex items-center gap-1">🧩 {sheet.total_pieces} piezas</span>
+                  <span className="flex items-center gap-1"> {sheet.client_name || 'Sin cliente'}</span>
+                  <span className="flex items-center gap-1"> {sheet.material}</span>
+                  <span className="flex items-center gap-1"> {sheet.total_pieces} piezas</span>
                 </div>
               </div>
               <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-2 border-t md:border-t-0 pt-4 md:pt-0 border-gray-50">

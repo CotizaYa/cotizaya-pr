@@ -37,7 +37,7 @@ export default function NewProjectPage() {
   return (
     <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
       <div style={{ marginBottom: "24px" }}>
-        <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#171717" }}>🏗️ Nuevo Proyecto</h1>
+        <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#171717" }}> Nuevo Proyecto</h1>
         <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#737373" }}>Genera un estimado completo de construcción en segundos</p>
       </div>
 
@@ -59,7 +59,7 @@ export default function NewProjectPage() {
           <div style={{ background: "white", border: "1px solid #e5e5e5", borderRadius: "14px", padding: "20px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
               <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <span style={{ fontSize: "12px", fontWeight: 700, color: "#525252", textTransform: "uppercase", letterSpacing: "0.05em" }}>📐 Pies Cuadrados *</span>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "#525252", textTransform: "uppercase", letterSpacing: "0.05em" }}> Pies Cuadrados *</span>
                 <input name="squareFeet" type="number" min="100" required placeholder="Ej: 1200"
                   onChange={e => setSqft(Number(e.target.value))}
                   style={{ border: "1px solid #e5e5e5", borderRadius: "10px", padding: "10px 14px", fontSize: "14px" }} />
@@ -77,7 +77,7 @@ export default function NewProjectPage() {
           </div>
 
           <div style={{ background: "white", border: "1px solid #e5e5e5", borderRadius: "14px", padding: "20px" }}>
-            <p style={{ margin: "0 0 12px", fontSize: "12px", fontWeight: 700, color: "#525252", textTransform: "uppercase", letterSpacing: "0.05em" }}>⭐ Nivel de Calidad *</p>
+            <p style={{ margin: "0 0 12px", fontSize: "12px", fontWeight: 700, color: "#525252", textTransform: "uppercase", letterSpacing: "0.05em" }}> Nivel de Calidad *</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {QUALITY.map(q => (
                 <label key={q.id} style={{ display: "flex", alignItems: "flex-start", gap: "12px", border: `2px solid ${quality === q.id ? q.color : "#e5e5e5"}`, borderRadius: "12px", padding: "14px", cursor: "pointer", background: quality === q.id ? "#fff7ed" : "white", transition: "all 0.15s" }}>
@@ -96,13 +96,13 @@ export default function NewProjectPage() {
 
           <button type="submit" disabled={pending || sqft <= 0}
             style={{ background: sqft <= 0 ? "#d4d4d4" : "#f97316", color: "white", border: "none", borderRadius: "12px", padding: "14px", fontSize: "15px", fontWeight: 700, cursor: sqft <= 0 ? "not-allowed" : "pointer", opacity: pending ? 0.7 : 1 }}>
-            {pending ? "Generando estimado…" : "🚀 Generar Estimado Completo"}
+            {pending ? "Generando estimado…" : " Generar Estimado Completo"}
           </button>
         </form>
 
         {/* Preview */}
         <div style={{ background: "#fff7ed", border: "2px solid #fed7aa", borderRadius: "16px", padding: "20px", position: "sticky", top: "20px" }}>
-          <p style={{ margin: "0 0 16px", fontSize: "13px", fontWeight: 700, color: "#c2410c", textTransform: "uppercase", letterSpacing: "0.05em" }}>📊 Vista Previa</p>
+          <p style={{ margin: "0 0 16px", fontSize: "13px", fontWeight: 700, color: "#c2410c", textTransform: "uppercase", letterSpacing: "0.05em" }}> Vista Previa</p>
           {sqft > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div>
@@ -127,7 +127,7 @@ export default function NewProjectPage() {
                 </div>
               )}
               <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "10px", padding: "10px", fontSize: "11px", color: "#1d4ed8" }}>
-                💡 Estimado aproximado basado en precios de mercado en Puerto Rico. El valor final puede variar.
+                 Estimado aproximado basado en precios de mercado en Puerto Rico. El valor final puede variar.
               </div>
             </div>
           ) : (

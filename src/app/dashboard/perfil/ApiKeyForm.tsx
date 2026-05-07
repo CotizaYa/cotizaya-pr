@@ -52,17 +52,17 @@ export function ApiKeyForm({ currentKey }: { currentKey: string | null }) {
           />
           <button type="button" onClick={() => setShow(s => !s)}
             style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "14px" }}>
-            {show ? "🙈" : "👁"}
+            {show ? "" : ""}
           </button>
         </div>
         <button onClick={handleSave} disabled={!key.trim() || pending}
           style={{ background: key.trim() ? "#f97316" : "#e5e5e5", color: key.trim() ? "white" : "#a3a3a3", border: "none", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 700, cursor: key.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>
-          {pending ? "…" : saved ? "✓ Guardado" : "Guardar"}
+          {pending ? "…" : saved ? " Guardado" : "Guardar"}
         </button>
       </div>
 
       {error && <p style={{ margin: 0, fontSize: "12px", color: "#dc2626" }}>{error}</p>}
-      {saved && <p style={{ margin: 0, fontSize: "12px", color: "#16a34a" }}>✅ API Key guardada. El Asistente IA ya está activo.</p>}
+      {saved && <p style={{ margin: 0, fontSize: "12px", color: "#16a34a" }}> API Key guardada. El Asistente IA ya está activo.</p>}
     </div>
   );
 }

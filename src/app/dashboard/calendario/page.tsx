@@ -189,7 +189,7 @@ export default function CalendarioPage() {
         </div>
       ) : Object.keys(groupedEvents).length === 0 ? (
         <div className="bg-white rounded-3xl p-16 text-center border-2 border-dashed border-gray-100">
-          <p className="text-6xl mb-4">🗓️</p>
+          <p className="text-6xl mb-4"></p>
           <h3 className="text-xl font-bold text-gray-900">No hay eventos programados</h3>
           <p className="text-gray-500 mt-2">Organiza tu taller y tus instalaciones aquí.</p>
         </div>
@@ -213,7 +213,7 @@ export default function CalendarioPage() {
                       </div>
                       <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
                       <p className="text-sm text-gray-500 font-medium flex items-center gap-1 mt-1">
-                        <span className="text-orange-500">👤</span> {event.client_name}
+                        <span className="text-orange-500"></span> {event.client_name}
                       </p>
                       {event.notes && <p className="text-xs text-gray-400 mt-2 bg-gray-50 p-2 rounded-lg italic">{event.notes}</p>}
                     </div>

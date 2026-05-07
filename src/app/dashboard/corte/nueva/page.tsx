@@ -6,11 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 import { calculateCutSheet, inchesToFeetDisplay, type CutItem } from '@/lib/cut-sheet-calculator'
 
 const PRODUCT_TYPES = [
-  { value: 'frame', label: 'Marco (Puerta/Ventana)', emoji: '🚪' },
-  { value: 'panel', label: 'Panel', emoji: '⬜' },
-  { value: 'rail', label: 'Riel', emoji: '↔️' },
-  { value: 'stile', label: 'Larguero', emoji: '↕️' },
-  { value: 'custom', label: 'Personalizado', emoji: '✏️' },
+  { value: 'frame', label: 'Marco (Puerta/Ventana)', emoji: '' },
+  { value: 'panel', label: 'Panel', emoji: '' },
+  { value: 'rail', label: 'Riel', emoji: '↔' },
+  { value: 'stile', label: 'Larguero', emoji: '↕' },
+  { value: 'custom', label: 'Personalizado', emoji: '' },
 ]
 
 const EMPTY_ITEM: CutItem = { label: '', width: 0, height: 0, quantity: 1, type: 'frame' }

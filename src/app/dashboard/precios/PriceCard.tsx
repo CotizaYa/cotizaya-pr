@@ -14,13 +14,13 @@ interface Product {
 }
 
 const CAT_ICONS: Record<string, string> = {
-  puerta: "🚪",
-  ventana: "🪟",
-  screen: "🛡️",
-  screen_ac: "❄️",
-  closet: "👔",
-  garaje: "🚗",
-  miscelanea: "🛠️"
+  puerta: "",
+  ventana: "",
+  screen: "",
+  screen_ac: "",
+  closet: "",
+  garaje: "",
+  miscelanea: ""
 };
 
 export function PriceCard({ 
@@ -63,7 +63,7 @@ export function PriceCard({
             className="w-full h-full object-cover"
           />
         ) : (
-          CAT_ICONS[product.category] || "📦"
+          CAT_ICONS[product.category] || ""
         )}
       </div>
 

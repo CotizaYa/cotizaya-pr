@@ -331,7 +331,7 @@ export default function NuevaCotizacionPage() {
             disabled={isSaving}
             className="w-full bg-[#F97316] hover:bg-orange-600 text-white font-bold py-3 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
           >
-            {isSaving ? "Guardando..." : "💾 GUARDAR COTIZACIÓN"}
+            {isSaving ? "Guardando..." : " GUARDAR COTIZACIÓN"}
           </button>
         </div>
       )}
