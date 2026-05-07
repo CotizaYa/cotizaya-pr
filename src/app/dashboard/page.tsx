@@ -20,6 +20,7 @@ export default async function DashboardPage() {
     { count: clientCount },
     { count: pendingCount },
     { data: productionEvents },
+    { count: activeProductionCount },
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('quotes').select('id, total, status').eq('owner_id', user.id).gte('created_at', startOfMonth),
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
     supabase.from('clients').select('*', { count: 'exact', head: true }).eq('owner_id', user.id),
     supabase.from('quotes').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).eq('status', 'sent'),
     supabase.from('production_events').select('id, title, start_date, status, color').eq('owner_id', user.id).gte('start_date', now.toISOString().split('T')[0]).order('start_date').limit(5),
+    supabase.from('production_events').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).in('status', ['pending', 'in_progress']),
   ])
 
   const revenueThisMonth = quotesThisMonth?.filter(q => q.status === 'accepted').reduce((s, q) => s + (q.total || 0), 0) ?? 0
@@ -46,6 +48,7 @@ export default async function DashboardPage() {
         clientCount: clientCount ?? 0,
         pendingCount: pendingCount ?? 0,
         acceptanceRate,
+        activeProductionCount: activeProductionCount ?? 0,
       }}
       recentQuotes={recentQuotes ?? []}
       productionEvents={productionEvents ?? []}

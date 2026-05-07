@@ -6,21 +6,22 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 interface ProductionEvent {
   id: string
   title: string
+  client_name: string
   start_date: string
   end_date: string
-  status: string
-  client_name: string
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled'
   notes: string | null
+  color?: string
 }
 
-const statusColor: Record<string, string> = {
+const statusColor = {
   scheduled: 'bg-blue-100 text-blue-700 border-blue-200',
   in_progress: 'bg-yellow-100 text-yellow-700 border-yellow-200',
   completed: 'bg-green-100 text-green-700 border-green-200',
-  cancelled: 'bg-red-100 text-red-600 border-red-200',
+  cancelled: 'bg-red-100 text-red-700 border-red-200',
 }
 
-const statusLabel: Record<string, string> = {
+const statusLabel = {
   scheduled: 'Programado',
   in_progress: 'En Progreso',
   completed: 'Completado',
@@ -28,181 +29,222 @@ const statusLabel: Record<string, string> = {
 }
 
 export default function CalendarioPage() {
+  const supabase = createClientComponentClient()
   const [events, setEvents] = useState<ProductionEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     title: '',
     client_name: '',
-    start_date: '',
-    end_date: '',
-    status: 'scheduled',
+    start_date: new Date().toISOString().split('T')[0],
+    end_date: new Date().toISOString().split('T')[0],
+    status: 'scheduled' as const,
     notes: '',
   })
-  const supabase = createClientComponentClient()
+
+  async function loadEvents() {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('production_events')
+      .select('*')
+      .eq('owner_id', user.id)
+      .order('start_date', { ascending: true })
+
+    setEvents(data || [])
+    setLoading(false)
+  }
 
   useEffect(() => {
     loadEvents()
   }, [])
-
-  async function loadEvents() {
-    const { data } = await supabase
-      .from('production_events')
-      .select('*')
-      .order('start_date', { ascending: true })
-    setEvents(data || [])
-    setLoading(false)
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    await supabase.from('production_events').insert({
-      ...form,
-      user_id: user.id,
-    })
-    setForm({ title: '', client_name: '', start_date: '', end_date: '', status: 'scheduled', notes: '' })
-    setShowForm(false)
-    loadEvents()
+    const { error } = await supabase
+      .from('production_events')
+      .insert([{ ...form, owner_id: user.id }])
+
+    if (!error) {
+      setForm({
+        title: '',
+        client_name: '',
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date().toISOString().split('T')[0],
+        status: 'scheduled',
+        notes: '',
+      })
+      setShowForm(false)
+      loadEvents()
+    }
   }
 
-  // Agrupar por mes
-  const grouped = events.reduce((acc, event) => {
-    const month = new Date(event.start_date).toLocaleDateString('es-PR', { month: 'long', year: 'numeric' })
+  async function updateStatus(id: string, newStatus: ProductionEvent['status']) {
+    const { error } = await supabase
+      .from('production_events')
+      .update({ status: newStatus })
+      .eq('id', id)
+
+    if (!error) loadEvents()
+  }
+
+  const groupedEvents = events.reduce((acc, event) => {
+    const date = new Date(event.start_date + 'T00:00:00')
+    const month = date.toLocaleString('es-PR', { month: 'long', year: 'numeric' })
     if (!acc[month]) acc[month] = []
     acc[month].push(event)
     return acc
   }, {} as Record<string, ProductionEvent[]>)
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Calendario de Producción</h1>
-          <p className="text-sm text-gray-500">Planifica y rastrea tus órdenes</p>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight uppercase">Calendario de Producción</h1>
+          <p className="text-gray-500 font-medium">Gestiona instalaciones y fabricación en el taller.</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition"
+          className="bg-[#F97316] text-white font-bold px-6 py-3 rounded-2xl shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all active:scale-95 flex items-center gap-2"
         >
-          + Nuevo Evento
+          {showForm ? 'Cerrar' : (
+            <>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nuevo Evento
+            </>
+          )}
         </button>
       </div>
 
-      {/* Formulario */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm mb-6 space-y-3">
-          <h2 className="font-semibold text-gray-800 mb-2">Nuevo Evento de Producción</h2>
-          <input
-            required
-            placeholder="Título (ej: Ventanas Residencia García)"
-            value={form.title}
-            onChange={e => setForm({ ...form, title: e.target.value })}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            required
-            placeholder="Nombre del cliente"
-            value={form.client_name}
-            onChange={e => setForm({ ...form, client_name: e.target.value })}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Fecha inicio</label>
+        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-3xl border-2 border-orange-100 shadow-xl space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Título del Trabajo</label>
               <input
                 required
+                className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-orange-500 outline-none bg-gray-50 font-medium"
+                placeholder="Ej: Instalación Res. Los Pinos"
+                value={form.title}
+                onChange={e => setForm({ ...form, title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Cliente</label>
+              <input
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-orange-500 outline-none bg-gray-50 font-medium"
+                placeholder="Nombre del cliente"
+                value={form.client_name}
+                onChange={e => setForm({ ...form, client_name: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Fecha Inicio</label>
+              <input
                 type="date"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-orange-500 outline-none bg-gray-50 font-medium"
                 value={form.start_date}
                 onChange={e => setForm({ ...form, start_date: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Fecha fin</label>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Fecha Fin</label>
               <input
-                required
                 type="date"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-orange-500 outline-none bg-gray-50 font-medium"
                 value={form.end_date}
                 onChange={e => setForm({ ...form, end_date: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
-          <select
-            value={form.status}
-            onChange={e => setForm({ ...form, status: e.target.value })}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="scheduled">Programado</option>
-            <option value="in_progress">En Progreso</option>
-            <option value="completed">Completado</option>
-            <option value="cancelled">Cancelado</option>
-          </select>
-          <textarea
-            placeholder="Notas (opcional)"
-            value={form.notes}
-            onChange={e => setForm({ ...form, notes: e.target.value })}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={2}
-          />
-          <div className="flex gap-2">
-            <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition">
-              Guardar
-            </button>
-            <button type="button" onClick={() => setShowForm(false)} className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-xl text-sm font-semibold hover:bg-gray-200 transition">
-              Cancelar
-            </button>
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Notas / Detalles</label>
+            <textarea
+              className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-orange-500 outline-none bg-gray-50 font-medium"
+              placeholder="Detalles adicionales del proyecto..."
+              rows={2}
+              value={form.notes}
+              onChange={e => setForm({ ...form, notes: e.target.value })}
+            />
           </div>
+          <button type="submit" className="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl hover:bg-black transition-colors shadow-lg">
+            Guardar en Calendario
+          </button>
         </form>
       )}
 
-      {/* Lista agrupada por mes */}
       {loading ? (
-        <div className="text-center py-20 text-gray-400">Cargando...</div>
-      ) : events.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-3">🗓️</p>
-          <p className="text-gray-500 font-medium">No tienes eventos programados</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="mt-4 bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-semibold"
-          >
-            Crear primer evento
-          </button>
+        <div className="flex justify-center py-12">
+          <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+        </div>
+      ) : Object.keys(groupedEvents).length === 0 ? (
+        <div className="bg-white rounded-3xl p-16 text-center border-2 border-dashed border-gray-100">
+          <p className="text-6xl mb-4">🗓️</p>
+          <h3 className="text-xl font-bold text-gray-900">No hay eventos programados</h3>
+          <p className="text-gray-500 mt-2">Organiza tu taller y tus instalaciones aquí.</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([month, monthEvents]) => (
-            <div key={month}>
-              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 capitalize">
-                {month}
-              </h2>
-              <div className="space-y-3">
+        <div className="space-y-10">
+          {Object.entries(groupedEvents).map(([month, monthEvents]) => (
+            <div key={month} className="space-y-4">
+              <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] ml-2">{month}</h2>
+              <div className="grid gap-4">
                 {monthEvents.map(event => (
-                  <div
-                    key={event.id}
-                    className={`border rounded-2xl p-4 ${statusColor[event.status] || 'bg-gray-50 border-gray-200'}`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-sm">{event.title}</p>
-                        <p className="text-xs opacity-70 mt-0.5">{event.client_name}</p>
-                        {event.notes && (
-                          <p className="text-xs opacity-60 mt-1">{event.notes}</p>
-                        )}
+                  <div key={event.id} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center gap-6 group hover:shadow-md transition-all">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase border ${statusColor[event.status]}`}>
+                          {statusLabel[event.status]}
+                        </span>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          {new Date(event.start_date + 'T00:00:00').toLocaleDateString('es-PR', { weekday: 'short', day: 'numeric' })}
+                          {event.start_date !== event.end_date && ` - ${new Date(event.end_date + 'T00:00:00').toLocaleDateString('es-PR', { day: 'numeric' })}`}
+                        </span>
                       </div>
-                      <div className="text-right text-xs opacity-70 shrink-0 ml-3">
-                        <p>{new Date(event.start_date).toLocaleDateString('es-PR')}</p>
-                        <p>→ {new Date(event.end_date).toLocaleDateString('es-PR')}</p>
-                      </div>
+                      <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
+                      <p className="text-sm text-gray-500 font-medium flex items-center gap-1 mt-1">
+                        <span className="text-orange-500">👤</span> {event.client_name}
+                      </p>
+                      {event.notes && <p className="text-xs text-gray-400 mt-2 bg-gray-50 p-2 rounded-lg italic">{event.notes}</p>}
                     </div>
-                    <div className="mt-2">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white bg-opacity-60">
-                        {statusLabel[event.status]}
-                      </span>
+                    <div className="flex items-center gap-2 border-t md:border-t-0 pt-4 md:pt-0 border-gray-50">
+                      {event.status !== 'completed' && (
+                        <button
+                          onClick={() => updateStatus(event.id, 'completed')}
+                          className="flex-1 md:flex-none px-4 py-2 bg-green-50 text-green-700 text-xs font-bold rounded-xl hover:bg-green-100 transition-colors"
+                        >
+                          Completar
+                        </button>
+                      )}
+                      {event.status === 'scheduled' && (
+                        <button
+                          onClick={() => updateStatus(event.id, 'in_progress')}
+                          className="flex-1 md:flex-none px-4 py-2 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl hover:bg-blue-100 transition-colors"
+                        >
+                          Iniciar
+                        </button>
+                      )}
+                      <button
+                        onClick={async () => {
+                          if (confirm('¿Eliminar este evento?')) {
+                            await supabase.from('production_events').delete().eq('id', event.id)
+                            loadEvents()
+                          }
+                        }}
+                        className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
                     </div>
                   </div>
                 ))}
