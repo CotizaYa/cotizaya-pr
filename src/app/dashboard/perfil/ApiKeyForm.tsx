@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { saveApiKey, removeApiKey } from "./actions";
+import { Loader2, Eye, EyeOff, Trash2 } from "lucide-react";
 
 export function ApiKeyForm({ currentKey }: { currentKey: string | null }) {
   const [key, setKey] = useState("");
@@ -30,39 +31,67 @@ export function ApiKeyForm({ currentKey }: { currentKey: string | null }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+    <div className="space-y-4">
       {currentKey && (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "8px", padding: "10px 14px" }}>
-          <span style={{ fontFamily: "monospace", fontSize: "13px", color: "#15803d" }}>{currentKey}</span>
-          <button onClick={handleRemove} disabled={pending}
-            style={{ background: "none", border: "none", color: "#dc2626", fontSize: "12px", cursor: "pointer", fontWeight: 600 }}>
-            Eliminar
+        <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+          <code className="text-xs text-green-600 font-mono">{currentKey}</code>
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={pending}
+            className="text-red-600 hover:text-red-700 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      <div style={{ display: "flex", gap: "8px" }}>
-        <div style={{ flex: 1, position: "relative" }}>
+      <div className="flex gap-2">
+        <div className="flex-1 relative">
           <input
             type={show ? "text" : "password"}
             value={key}
-            onChange={e => setKey(e.target.value)}
-            placeholder="sk-ant-api03-..."
-            style={{ width: "100%", border: "1px solid #e5e5e5", borderRadius: "8px", padding: "9px 40px 9px 12px", fontSize: "13px", fontFamily: "monospace", boxSizing: "border-box" }}
+            onChange={(e) => setKey(e.target.value)}
+            placeholder="sk-ant-..."
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all pr-10 font-mono text-sm"
           />
-          <button type="button" onClick={() => setShow(s => !s)}
-            style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "14px" }}>
-            {show ? "" : ""}
+          <button
+            type="button"
+            onClick={() => setShow(!show)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        <button onClick={handleSave} disabled={!key.trim() || pending}
-          style={{ background: key.trim() ? "#f97316" : "#e5e5e5", color: key.trim() ? "white" : "#a3a3a3", border: "none", borderRadius: "8px", padding: "9px 16px", fontSize: "13px", fontWeight: 700, cursor: key.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>
-          {pending ? "…" : saved ? " Guardado" : "Guardar"}
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!key.trim() || pending}
+          className="flex items-center justify-center gap-2 bg-orange-600 text-white font-bold px-6 py-2.5 rounded-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {pending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Guardando
+            </>
+          ) : saved ? (
+            "Guardado"
+          ) : (
+            "Guardar"
+          )}
         </button>
       </div>
 
-      {error && <p style={{ margin: 0, fontSize: "12px", color: "#dc2626" }}>{error}</p>}
-      {saved && <p style={{ margin: 0, fontSize: "12px", color: "#16a34a" }}> API Key guardada. El Asistente IA ya está activo.</p>}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700 font-medium">{error}</p>
+        </div>
+      )}
+      {saved && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-700 font-medium">API Key guardada. El Asistente IA ya está activo.</p>
+        </div>
+      )}
     </div>
   );
 }

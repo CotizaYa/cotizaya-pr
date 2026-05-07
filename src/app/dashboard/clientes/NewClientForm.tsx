@@ -1,11 +1,12 @@
 "use client";
 import { useState, useTransition } from "react";
 import { createClientAction } from "./actions";
+import { Plus, X, Loader2 } from "lucide-react";
 
 export function NewClientForm() {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string|null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -15,51 +16,122 @@ export function NewClientForm() {
     start(async () => {
       const res = await createClientAction({
         full_name: String(fd.get("full_name")),
-        phone: String(fd.get("phone")||""),
-        email: String(fd.get("email")||""),
-        address: String(fd.get("address")||""),
+        phone: String(fd.get("phone") || ""),
+        email: String(fd.get("email") || ""),
+        address: String(fd.get("address") || ""),
       });
-      if (!res.ok) { setError(res.error); return; }
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
       setOpen(false);
       form.reset();
     });
   }
 
-  if (!open) return (
-    <button onClick={()=>setOpen(true)}
-      style={{ background:"#f97316", color:"white", border:"none", borderRadius:"12px", padding:"8px 16px", fontSize:"13px", fontWeight:700, cursor:"pointer" }}>
-       Nuevo Cliente
-    </button>
-  );
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 bg-orange-600 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-all active:scale-95"
+      >
+        <Plus className="w-5 h-5" />
+        Nuevo Cliente
+      </button>
+    );
+  }
 
   return (
-    <form onSubmit={handleSubmit} style={{ background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:"12px", padding:"16px" }}>
-      <p style={{ margin:"0 0 12px", fontSize:"13px", fontWeight:700, color:"#171717" }}>Nuevo Cliente</p>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px" }}>
-        {[
-          { name:"full_name", label:"Nombre completo *", placeholder:"Juan Pérez", required:true },
-          { name:"phone",     label:"Teléfono",          placeholder:"787-555-0000" },
-          { name:"email",     label:"Email",             placeholder:"juan@email.com" },
-          { name:"address",   label:"Ciudad / Dirección",placeholder:"Arecibo, PR" },
-        ].map(f => (
-          <label key={f.name} style={{ display:"flex", flexDirection:"column", gap:"3px" }}>
-            <span style={{ fontSize:"11px", fontWeight:600, color:"#525252" }}>{f.label}</span>
-            <input name={f.name} required={f.required} placeholder={f.placeholder}
-              style={{ border:"1px solid #e5e5e5", borderRadius:"8px", padding:"7px 10px", fontSize:"13px", background:"white" }} />
-          </label>
-        ))}
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900">Nuevo Cliente</h2>
+          <button
+            onClick={() => setOpen(false)}
+            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
+              Nombre Completo *
+            </label>
+            <input
+              name="full_name"
+              required
+              placeholder="Juan Pérez"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
+              Teléfono
+            </label>
+            <input
+              name="phone"
+              placeholder="787-555-0000"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
+              Email
+            </label>
+            <input
+              name="email"
+              type="email"
+              placeholder="juan@email.com"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
+              Ciudad / Dirección
+            </label>
+            <input
+              name="address"
+              placeholder="Arecibo, PR"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700 font-medium">{error}</p>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="submit"
+              disabled={pending}
+              className="flex-1 flex items-center justify-center gap-2 bg-orange-600 text-white font-bold py-2.5 rounded-lg hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {pending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                "Guardar Cliente"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-lg hover:bg-gray-200 transition-all"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
       </div>
-      {error && <p style={{ color:"#dc2626", fontSize:"12px", margin:"8px 0 0" }}>{error}</p>}
-      <div style={{ display:"flex", gap:"8px", marginTop:"12px" }}>
-        <button type="submit" disabled={pending}
-          style={{ background:"#f97316", color:"white", border:"none", borderRadius:"8px", padding:"8px 16px", fontSize:"13px", fontWeight:700, cursor:"pointer", opacity:pending?0.6:1 }}>
-          {pending ? "Guardando…" : "Guardar"}
-        </button>
-        <button type="button" onClick={()=>setOpen(false)}
-          style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"8px", padding:"8px 16px", fontSize:"13px", cursor:"pointer" }}>
-          Cancelar
-        </button>
-      </div>
-    </form>
+    </div>
   );
 }

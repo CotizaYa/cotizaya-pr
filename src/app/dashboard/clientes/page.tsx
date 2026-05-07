@@ -2,50 +2,62 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { formatUSD } from "@/lib/calculations";
 import { NewClientForm } from "./NewClientForm";
+import { Users, Plus } from "lucide-react";
 
 export default async function ClientesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const { data: clients } = await supabase.from("clients").select("*, quotes(total)").eq("owner_id", user.id).order("full_name");
+  
+  const { data: clients } = await supabase
+    .from("clients")
+    .select("*, quotes(total)")
+    .eq("owner_id", user.id)
+    .order("full_name");
+
   return (
-    <div style={{ padding:"24px", maxWidth:"700px", margin:"0 auto" }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"16px" }}>
+    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 style={{ margin:0, fontSize:"20px", fontWeight:700, color:"#171717" }}>Clientes</h1>
-          <p style={{ margin:"2px 0 0", fontSize:"13px", color:"#737373" }}>{clients?.length ?? 0} registrados</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Clientes</h1>
+          <p className="text-gray-500 font-medium mt-1">{clients?.length ?? 0} registrados en tu base de datos</p>
         </div>
+        <NewClientForm />
       </div>
-      <NewClientForm />
-      <div style={{ background:"white", border:"1px solid #e5e5e5", borderRadius:"12px", overflow:"hidden", marginTop:"14px" }}>
-        {(!clients || clients.length === 0) ? (
-          <div style={{ padding:"40px", textAlign:"center" }}>
-            <p style={{ fontSize:"28px", margin:"0 0 6px" }}></p>
-            <p style={{ fontSize:"13px", color:"#737373" }}>Aún no tienes clientes.</p>
+
+      {/* Clients List */}
+      <div className="bg-white border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+        {!clients || clients.length === 0 ? (
+          <div className="p-12 text-center">
+            <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="font-bold text-gray-900 mb-1">Aún no tienes clientes</p>
+            <p className="text-sm text-gray-500">Agrega tu primer cliente para comenzar a cotizar.</p>
           </div>
         ) : (
-          <ul style={{ margin:0, padding:0, listStyle:"none" }}>
-            {clients.map((c:any) => {
-              const total = (c.quotes ?? []).reduce((s:number,q:any)=>s+Number(q.total),0);
+          <div className="divide-y divide-gray-50">
+            {clients.map((client: any) => {
+              const totalQuoted = (client.quotes ?? []).reduce((sum: number, q: any) => sum + Number(q.total || 0), 0);
               return (
-                <li key={c.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", borderBottom:"1px solid #fafafa" }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                    <div style={{ width:"36px", height:"36px", background:"#fff7ed", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"14px", fontWeight:700, color:"#f97316" }}>
-                      {c.full_name.charAt(0).toUpperCase()}
+                <div key={client.id} className="flex items-center justify-between p-4 md:p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 font-bold text-lg">
+                      {client.full_name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p style={{ margin:0, fontSize:"13px", fontWeight:600, color:"#171717" }}>{c.full_name}</p>
-                      <p style={{ margin:0, fontSize:"11px", color:"#a3a3a3" }}>{c.phone ?? "Sin teléfono"}</p>
+                      <p className="text-sm md:text-base font-bold text-gray-900">{client.full_name}</p>
+                      <p className="text-xs md:text-sm text-gray-500">{client.phone || "Sin teléfono"}</p>
+                      {client.address && <p className="text-xs text-gray-400">{client.address}</p>}
                     </div>
                   </div>
-                  <div style={{ textAlign:"right" }}>
-                    <p style={{ margin:0, fontSize:"13px", fontWeight:700, color:"#171717" }}>{formatUSD(total)}</p>
-                    <p style={{ margin:0, fontSize:"11px", color:"#a3a3a3" }}>{(c.quotes??[]).length} cotizaciones</p>
+                  <div className="text-right">
+                    <p className="text-sm md:text-base font-bold text-gray-900">{formatUSD(totalQuoted)}</p>
+                    <p className="text-xs text-gray-500">{(client.quotes ?? []).length} cotizaciones</p>
                   </div>
-                </li>
+                </div>
               );
             })}
-          </ul>
+          </div>
         )}
       </div>
     </div>
