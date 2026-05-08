@@ -63,14 +63,14 @@ function NuevaCotizacionContent() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        // Load all quotable products — filter in JS (Supabase .in() + .or() combination breaks PostgREST)
-        // Screen accessories (S004-S009: malla, perfiles, falleba) are excluded from step 1
+        // RLS policy handles (owner_id IS NULL OR owner_id = auth.uid()) automatically
+        // Explicit .or() in browser Supabase client has inconsistent behavior — removed
         const SCREEN_ACCESSORIES = ['S004','S005','S006','S007','S008','S009']
         const MAIN_CATS = ['screen','puerta','ventana','closet']
 
         const [allProdsRes, pricesRes] = await Promise.all([
-          supabase.from('products').select('*').eq('is_active', true)
-            .or(`owner_id.is.null,owner_id.eq.${user.id}`)
+          supabase.from('products').select('*')
+            .eq('is_active', true)
             .order('category').order('code'),
           supabase.from('user_prices').select('*').eq('user_id', user.id),
         ])

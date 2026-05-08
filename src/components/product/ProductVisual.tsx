@@ -248,6 +248,63 @@ function ClosetDoor({ panels }: { panels: 2 | 3 | 4 }) {
 }
 
 // ── Materials / Glass ─────────────────────────────────────────────────────────
+function MallaRender() {
+  return (
+    <svg viewBox="0 0 200 200" className="w-full h-full">
+      <rect width="200" height="200" fill={C.bg} rx="4" />
+      <defs>
+        <pattern id="malla-grid" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+          <path d="M 12 0 L 0 0 0 12" fill="none" stroke={C.meshLine} strokeWidth="1.2" />
+          <path d="M 12 0 L 12 12" fill="none" stroke={C.meshLine} strokeWidth="1.2" />
+          <path d="M 0 12 L 12 12" fill="none" stroke={C.meshLine} strokeWidth="1.2" />
+        </pattern>
+      </defs>
+      <rect x="22" y="22" width="156" height="156" rx="4" fill={C.frame} stroke={C.frameStr} strokeWidth="3" />
+      <rect x="30" y="30" width="140" height="140" rx="2" fill={`url(#malla-grid)`} />
+      <rect x="22" y="22" width="156" height="8" rx="4" fill={C.panelDk} opacity="0.15" />
+      <rect x="22" y="22" width="8" height="156" fill={C.panelDk} opacity="0.1" />
+      <text x="100" y="192" textAnchor="middle" fontSize="10" fontWeight="700" fill="#4a7a94" fontFamily="system-ui">MALLA</text>
+    </svg>
+  )
+}
+
+function TornilleriaRender() {
+  return (
+    <svg viewBox="0 0 200 200" className="w-full h-full">
+      <rect width="200" height="200" fill={C.bg} rx="4" />
+      {/* Bolt head */}
+      <polygon points="100,30 128,46 128,78 100,94 72,78 72,46" fill={C.panel} stroke={C.frameStr} strokeWidth="2.5" />
+      <polygon points="100,44 118,54 118,74 100,84 82,74 82,54" fill={C.panelLt} />
+      {/* Shaft */}
+      <rect x="90" y="90" width="20" height="65" rx="2" fill={C.panel} stroke={C.frameStr} strokeWidth="2" />
+      {/* Thread lines */}
+      {[100,110,120,130,140,150].map(y => (
+        <line key={y} x1="88" y1={y} x2="112" y2={y} stroke={C.panelDk} strokeWidth="1.5" opacity="0.5" />
+      ))}
+      {/* Point */}
+      <polygon points="90,155 110,155 100,172" fill={C.panelDk} />
+      <text x="100" y="192" textAnchor="middle" fontSize="10" fontWeight="700" fill="#4a7a94" fontFamily="system-ui">TORNILLO</text>
+    </svg>
+  )
+}
+
+function ServicioRender() {
+  return (
+    <svg viewBox="0 0 200 200" className="w-full h-full">
+      <rect width="200" height="200" fill={C.bg} rx="4" />
+      {/* Wrench body */}
+      <ellipse cx="76" cy="58" rx="26" ry="22" fill="none" stroke={C.panel} strokeWidth="9" />
+      <ellipse cx="76" cy="58" rx="12" ry="10" fill={C.bg} />
+      {/* Handle */}
+      <rect x="90" y="68" width="16" height="80" rx="8" fill={C.panel} stroke={C.frameStr} strokeWidth="2"
+        transform="rotate(40, 98, 108)" />
+      {/* Small circle on wrench */}
+      <circle cx="76" cy="58" r="6" fill={C.panelLt} stroke={C.frameStr} strokeWidth="2" />
+      <text x="100" y="192" textAnchor="middle" fontSize="10" fontWeight="700" fill="#4a7a94" fontFamily="system-ui">SERVICIO</text>
+    </svg>
+  )
+}
+
 function MaterialRender({ label }: { label: string }) {
   return (
     <svg viewBox="0 0 200 160" className="w-full h-full">
@@ -349,10 +406,16 @@ function renderByCode(code: string | null, category: string | null) {
 
   // ── Materials ──
   if (cat === 'cristal' || c.startsWith('CR')) return <GlassRender />
+  // Malla — mesh pattern (not a profile)
+  if (c === 'S004' || c === 'S005') return <MallaRender />
+  // Aluminum profiles
   if (cat === 'aluminio' || c.startsWith('A')) return <MaterialRender label="PERFIL" />
-  if (cat === 'tornilleria' || c.startsWith('T')) return <MaterialRender label="FIJACIÓN" />
-  if (cat === 'miscelanea' || c.startsWith('M')) return <MaterialRender label="ACCESORIO" />
+  // Screen accessories (S006-S009)
   if (c.startsWith('S')) return <MaterialRender label="PERFIL" />
+  // Fasteners — bolt
+  if (cat === 'tornilleria' || c.startsWith('T')) return <TornilleriaRender />
+  // Services / miscellaneous — wrench
+  if (cat === 'miscelanea' || c.startsWith('M')) return <ServicioRender />
 
   // ── Category fallback ──
   if (cat === 'screen') return <ScreenDoor />
