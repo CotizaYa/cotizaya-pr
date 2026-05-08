@@ -32,6 +32,9 @@ export default function HomePage() {
             <Link href="/catalogo" className="hidden sm:inline text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">
               Catálogo
             </Link>
+            <Link href="/buscar" className="hidden sm:inline text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">
+              Fabricantes
+            </Link>
             <Link href="#features" className="hidden md:inline text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">
               Características
             </Link>
@@ -47,10 +50,10 @@ export default function HomePage() {
               </Link>
             ) : (
               <Link
-                href="/login"
+                href="/register"
                 className="px-6 py-2 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition-all"
               >
-                Iniciar Sesión
+                Crear cuenta
               </Link>
             )}
           </nav>
@@ -70,10 +73,10 @@ export default function HomePage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
           <Link
-            href="/login"
+            href="/register"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition-all shadow-lg hover:shadow-xl"
           >
-            Prueba Gratis 14 Días
+            Crear cuenta gratis
             <ArrowRight className="w-5 h-5" />
           </Link>
           <Link
@@ -199,9 +202,9 @@ export default function HomePage() {
                 <span className="text-4xl font-black text-gray-900">$14.99</span>
                 <span className="text-gray-600 font-bold">/mes</span>
               </div>
-              <button className="w-full py-3 border-2 border-gray-300 text-gray-900 font-bold rounded-xl hover:border-gray-400 transition-all mb-8">
-                Empezar Ahora
-              </button>
+              <Link href="/register" className="block w-full py-3 border-2 border-gray-300 text-center text-gray-900 font-bold rounded-xl hover:border-gray-400 transition-all mb-8">
+                Empezar ahora
+              </Link>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -233,9 +236,9 @@ export default function HomePage() {
                 <span className="text-4xl font-black">$24.99</span>
                 <span className="text-orange-100 font-bold">/mes</span>
               </div>
-              <button className="w-full py-3 bg-white text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-all mb-8">
-                Empezar Ahora
-              </button>
+              <Link href="/register" className="block w-full py-3 bg-white text-center text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-all mb-8">
+                Empezar ahora
+              </Link>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -275,9 +278,9 @@ export default function HomePage() {
               <div className="mb-6">
                 <span className="text-2xl font-black text-gray-900">Contactar</span>
               </div>
-              <button className="w-full py-3 border-2 border-gray-300 text-gray-900 font-bold rounded-xl hover:border-gray-400 transition-all mb-8">
-                Solicitar Demo
-              </button>
+              <Link href="/buscar" className="block w-full py-3 border-2 border-gray-300 text-center text-gray-900 font-bold rounded-xl hover:border-gray-400 transition-all mb-8">
+                Ver fabricantes públicos
+              </Link>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -309,10 +312,10 @@ export default function HomePage() {
             14 días completos sin tarjeta de crédito. Acceso a todas las características Pro.
           </p>
           <Link
-            href="/login"
+            href="/register"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-all shadow-lg"
           >
-            Comenzar Ahora
+            Crear cuenta
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
@@ -341,15 +344,15 @@ export default function HomePage() {
             <div>
               <h4 className="font-bold text-white mb-4">Empresa</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Acerca de</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                <li><Link href="/catalogo" className="hover:text-white transition-colors">Catálogo público</Link></li>
+                <li><Link href="/buscar" className="hover:text-white transition-colors">Fabricantes públicos</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-white mb-4">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Términos</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacidad</a></li>
+                <li><Link href="/register" className="hover:text-white transition-colors">Crear cuenta</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">Iniciar sesión</Link></li>
               </ul>
             </div>
           </div>

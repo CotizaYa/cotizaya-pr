@@ -88,11 +88,11 @@ export default function CatalogoPublicoPage() {
               Modelos visuales para puertas, ventanas y screens en Puerto Rico
             </h1>
             <p className="mt-5 max-w-2xl text-lg font-medium leading-8 text-slate-600">
-              CotizaYa muestra modelos reales por categoría, permite que cada fabricante configure sus propios precios y genera cotizaciones con hoja de compra lista para fabricación.
+              CotizaYa muestra modelos por categoría, permite que cada fabricante configure sus propios precios y genera cotizaciones con hoja de compra lista para fabricación. El catálogo público es una muestra técnica; el valor real ocurre cuando el contratista carga sus precios y medidas.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black text-white shadow-lg shadow-orange-200 transition hover:bg-orange-700">
-                Crear cotización <ArrowRight className="h-4 w-4" />
+              <Link href="/register" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-600 px-6 py-4 text-sm font-black text-white shadow-lg shadow-orange-200 transition hover:bg-orange-700">
+                Crear cotización real <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/buscar" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-4 text-sm font-black text-slate-900 transition hover:border-slate-400">
                 Ver fabricantes públicos
@@ -114,7 +114,7 @@ export default function CatalogoPublicoPage() {
                 <p className="mt-1 max-w-3xl text-sm font-medium leading-6 text-slate-600">{category.description}</p>
               </div>
               <div className="inline-flex items-center gap-2 text-sm font-black text-emerald-700">
-                <CheckCircle2 className="h-4 w-4" /> Modelos visuales
+                <CheckCircle2 className="h-4 w-4" /> Diagramas técnicos
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

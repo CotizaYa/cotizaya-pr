@@ -88,7 +88,7 @@ export default function BuscarFabricantesPublicoPage() {
               Fabricantes publicados en Puerto Rico
             </h1>
             <p className="mt-4 text-lg font-medium leading-8 text-slate-600">
-              Busca contratistas y talleres que publican su perfil y catálogo en CotizaYa. Esta página es pública y no requiere iniciar sesión.
+              Busca contratistas y talleres que publican su perfil y catálogo en CotizaYa. Esta página es pública, no requiere iniciar sesión y solo debe mostrar perfiles reales publicados por sus dueños.
             </p>
           </div>
         </div>
@@ -141,8 +141,16 @@ export default function BuscarFabricantesPublicoPage() {
         {!searched ? (
           <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-12 text-center">
             <Building2 className="mx-auto mb-4 h-12 w-12 text-slate-300" />
-            <h2 className="text-xl font-black text-slate-950">Busca fabricantes por nombre o ciudad</h2>
-            <p className="mt-2 text-sm font-medium text-slate-600">Cuando el directorio tenga perfiles publicados, aparecerán aquí con enlace a su catálogo público.</p>
+            <h2 className="text-xl font-black text-slate-950">Directorio conectado a perfiles reales</h2>
+            <p className="mx-auto mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-600">Cuando un fabricante publique su perfil en CotizaYa, aparecerá aquí con ciudad, contacto y enlace a su catálogo público. No usamos fabricantes inventados para llenar espacio.</p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link href="/register" className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-3 text-sm font-black text-white transition hover:bg-orange-700">
+                Publicar mi negocio
+              </Link>
+              <Link href="/catalogo" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-black text-slate-900 transition hover:border-slate-400">
+                Ver catálogo técnico
+              </Link>
+            </div>
           </div>
         ) : loading ? (
           <div className="flex items-center justify-center rounded-[2rem] border border-slate-200 bg-white p-12">
@@ -152,10 +160,15 @@ export default function BuscarFabricantesPublicoPage() {
           <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-12 text-center">
             <Search className="mx-auto mb-4 h-12 w-12 text-slate-300" />
             <h2 className="text-xl font-black text-slate-950">No hay fabricantes para esos filtros</h2>
-            <p className="mt-2 text-sm font-medium text-slate-600">Prueba otra ciudad o regresa al catálogo público de modelos.</p>
-            <Link href="/catalogo" className="mt-6 inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-black text-slate-900 transition hover:border-slate-400">
-              Ver catálogo público
-            </Link>
+            <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-slate-600">Prueba otra ciudad, vuelve al catálogo técnico o publica tu negocio para que futuros clientes encuentren tu perfil cuando la cuenta esté configurada.</p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link href="/catalogo" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-black text-slate-900 transition hover:border-slate-400">
+                Ver catálogo técnico
+              </Link>
+              <Link href="/register" className="inline-flex items-center justify-center rounded-2xl bg-orange-600 px-6 py-3 text-sm font-black text-white transition hover:bg-orange-700">
+                Publicar mi negocio
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
