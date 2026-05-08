@@ -99,7 +99,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isActive = (href: string, exact = false) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + '/')
 
-  const displayName = profile?.business_name || profile?.full_name || 'Mi Negocio'
+  // Show real name: business_name if set and not default, else format from email
+  const emailUser = profile?.email?.split('@')[0]
+    ?.replace(/[._-]/g, ' ')
+    ?.replace(/\b\w/g, (c: string) => c.toUpperCase()) || ''
+  const defaultNames = ['Mi Empresa', 'Mi Negocio', '']
+  const displayName = (!defaultNames.includes(profile?.business_name ?? '') && profile?.business_name)
+    ? profile.business_name
+    : (emailUser || 'Mi Negocio')
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
   return (

@@ -2,24 +2,17 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PriceCard } from "./PriceCard";
 
-const CAT_ORDER = [
-  "puerta", 
-  "ventana", 
-  "screen", 
-  "screen_ac", 
-  "closet", 
-  "garaje", 
-  "miscelanea"
-];
+const CAT_ORDER = ["screen", "puerta", "ventana", "closet", "aluminio", "cristal", "tornilleria", "miscelanea"];
 
-const CAT_LABEL: Record<string, string> = { 
-  puerta: "Puertas", 
-  ventana: "Ventanas", 
-  screen: "Screens", 
-  screen_ac: "Screen A/C",
-  closet: "Closets", 
-  garaje: "Puertas de Garaje",
-  miscelanea: "Servicios y Otros" 
+const CAT_LABEL: Record<string, string> = {
+  screen:      "Puertas y Ventanas de Screen",
+  puerta:      "Puertas de Aluminio",
+  ventana:     "Ventanas",
+  closet:      "Puertas de Closet",
+  aluminio:    "Perfilería de Aluminio",
+  cristal:     "Cristalería y Vidrio",
+  tornilleria: "Tornillería y Fijación",
+  miscelanea:  "Servicios y Otros",
 };
 
 export default async function PreciosPage() {

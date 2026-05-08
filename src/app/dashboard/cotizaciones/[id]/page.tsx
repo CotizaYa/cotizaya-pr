@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { formatUSD } from "@/lib/calculations";
 import { CopyLinkButton } from "./CopyLinkButton";
@@ -26,7 +27,10 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
 
   if (!quote) notFound();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cotizaya.pr";
+  const headersList = await headers()
+  const host = headersList.get('host') || 'cotizaya-pr.vercel.app'
+  const proto = headersList.get('x-forwarded-proto') || 'https'
+  const appUrl = `${proto}://${host}`
   const shareLink = `${appUrl}/share/${quote.public_token}`;
   const client = (quote as any).clients;
 

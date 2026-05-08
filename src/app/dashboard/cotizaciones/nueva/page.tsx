@@ -63,25 +63,32 @@ function NuevaCotizacionContent() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        const [productsRes, pricesRes] = await Promise.all([
+        // Load all quotable products — filter in JS (Supabase .in() + .or() combination breaks PostgREST)
+        // Screen accessories (S004-S009: malla, perfiles, falleba) are excluded from step 1
+        const SCREEN_ACCESSORIES = ['S004','S005','S006','S007','S008','S009']
+        const MAIN_CATS = ['screen','puerta','ventana','closet']
+
+        const [allProdsRes, pricesRes] = await Promise.all([
           supabase.from('products').select('*').eq('is_active', true)
-            .in('category', ['screen', 'puerta', 'ventana', 'closet'])
             .or(`owner_id.is.null,owner_id.eq.${user.id}`)
             .order('category').order('code'),
           supabase.from('user_prices').select('*').eq('user_id', user.id),
         ])
 
-        setProducts(productsRes.data ?? [])
+        const filteredProds = (allProdsRes.data ?? []).filter(p =>
+          MAIN_CATS.includes(p.category) &&
+          !SCREEN_ACCESSORIES.includes(p.code ?? '')
+        )
+        setProducts(filteredProds)
         const pricesMap: Record<string, number> = {}
         ;(pricesRes.data ?? []).forEach((p: any) => {
           pricesMap[p.product_id] = p.price
         })
         setUserPrices(pricesMap)
 
-        // Si viene modelo del catálogo, seleccionarlo
         const modeloParam = searchParams.get('modelo')
-        if (modeloParam && productsRes.data) {
-          const product = productsRes.data.find(p => p.code === modeloParam)
+        if (modeloParam && filteredProds.length > 0) {
+          const product = filteredProds.find(p => p.code === modeloParam)
           if (product) {
             setSelectedProduct(product)
             setStep(2)
