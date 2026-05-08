@@ -28,6 +28,7 @@ export default function CalendarioPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState({
     title: '',
     client_name: '',
@@ -39,17 +40,30 @@ export default function CalendarioPage() {
 
   async function loadEvents() {
     setLoading(true)
+    setError(null)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        setError('No autenticado')
+        return
+      }
 
-      const { data } = await supabase
+      const { data, error: queryError } = await supabase
         .from('production_events')
         .select('*')
         .eq('owner_id', user.id)
         .order('start_date', { ascending: true })
 
+      if (queryError) {
+        console.error('Error cargando eventos:', queryError)
+        setError('Error al cargar eventos')
+        return
+      }
+
       setEvents(data || [])
+    } catch (err) {
+      console.error('Error en loadEvents:', err)
+      setError('Error al cargar eventos')
     } finally {
       setLoading(false)
     }
@@ -62,237 +76,284 @@ export default function CalendarioPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
+    setError(null)
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { error } = await supabase
-        .from('production_events')
-        .insert([{ ...form, owner_id: user.id }])
-
-      if (!error) {
-        setForm({
-          title: '',
-          client_name: '',
-          start_date: new Date().toISOString().split('T')[0],
-          end_date: new Date().toISOString().split('T')[0],
-          status: 'scheduled',
-          notes: '',
-        })
-        setShowForm(false)
-        await loadEvents()
+      if (!user) {
+        setError('No autenticado')
+        setSubmitting(false)
+        return
       }
+
+      // Validar que los campos requeridos estén completos
+      if (!form.title.trim() || !form.client_name.trim()) {
+        setError('Por favor completa todos los campos requeridos')
+        setSubmitting(false)
+        return
+      }
+
+      const { error: insertError } = await supabase
+        .from('production_events')
+        .insert([{
+          owner_id: user.id,
+          title: form.title.trim(),
+          client_name: form.client_name.trim(),
+          start_date: form.start_date,
+          end_date: form.end_date,
+          status: form.status,
+          notes: form.notes.trim() || null,
+        }])
+
+      if (insertError) {
+        console.error('Error al insertar evento:', insertError)
+        setError(`Error al guardar evento: ${insertError.message}`)
+        setSubmitting(false)
+        return
+      }
+
+      // Resetear formulario y recargar eventos
+      setForm({
+        title: '',
+        client_name: '',
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date().toISOString().split('T')[0],
+        status: 'scheduled',
+        notes: '',
+      })
+      setShowForm(false)
+      await loadEvents()
+    } catch (err) {
+      console.error('Error en handleSubmit:', err)
+      setError('Error inesperado al guardar evento')
     } finally {
       setSubmitting(false)
     }
   }
 
   async function updateStatus(id: string, newStatus: ProductionEvent['status']) {
-    const { error } = await supabase
-      .from('production_events')
-      .update({ status: newStatus })
-      .eq('id', id)
+    try {
+      const { error } = await supabase
+        .from('production_events')
+        .update({ status: newStatus })
+        .eq('id', id)
 
-    if (!error) loadEvents()
+      if (error) {
+        console.error('Error al actualizar estado:', error)
+        setError('Error al actualizar estado')
+        return
+      }
+
+      await loadEvents()
+    } catch (err) {
+      console.error('Error en updateStatus:', err)
+      setError('Error al actualizar estado')
+    }
   }
 
   async function deleteEvent(id: string) {
     if (!confirm('¿Eliminar este evento?')) return
-    const { error } = await supabase
-      .from('production_events')
-      .delete()
-      .eq('id', id)
 
-    if (!error) loadEvents()
+    try {
+      const { error } = await supabase
+        .from('production_events')
+        .delete()
+        .eq('id', id)
+
+      if (error) {
+        console.error('Error al eliminar evento:', error)
+        setError('Error al eliminar evento')
+        return
+      }
+
+      await loadEvents()
+    } catch (err) {
+      console.error('Error en deleteEvent:', err)
+      setError('Error al eliminar evento')
+    }
   }
 
-  const groupedEvents = events.reduce((acc, event) => {
-    const date = new Date(event.start_date + 'T00:00:00')
-    const month = date.toLocaleString('es-PR', { month: 'long', year: 'numeric' })
-    if (!acc[month]) acc[month] = []
-    acc[month].push(event)
-    return acc
-  }, {} as Record<string, ProductionEvent[]>)
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
+      </div>
+    )
+  }
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto pb-24">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Calendario de Producción</h1>
-          <p className="text-gray-500 font-medium mt-1">Gestiona instalaciones y fabricación en el taller.</p>
+          <h1 className="text-3xl font-bold text-gray-900">Calendario de Producción</h1>
+          <p className="text-gray-500 mt-1">Gestiona tus eventos de fabricación e instalación</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center justify-center gap-2 bg-orange-600 text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-all active:scale-95"
+          className="flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 transition-all active:scale-95"
         >
-          {showForm ? (
-            <>
-              <X className="w-5 h-5" />
-              Cerrar
-            </>
-          ) : (
-            <>
-              <Plus className="w-5 h-5" />
-              Nuevo Evento
-            </>
-          )}
+          <Plus className="w-5 h-5" />
+          Nuevo Evento
         </button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg border border-gray-100 shadow-lg space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
-                Título del Trabajo *
-              </label>
-              <input
-                required
-                placeholder="Ej: Instalación Res. Los Pinos"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
-                Cliente *
-              </label>
-              <input
-                required
-                placeholder="Nombre del cliente"
-                value={form.client_name}
-                onChange={(e) => setForm({ ...form, client_name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
-                Fecha Inicio *
-              </label>
-              <input
-                type="date"
-                required
-                value={form.start_date}
-                onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
-                Fecha Fin *
-              </label>
-              <input
-                type="date"
-                required
-                value={form.end_date}
-                onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1 block">
-              Notas / Detalles
-            </label>
-            <textarea
-              placeholder="Detalles adicionales del proyecto..."
-              rows={2}
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white font-bold py-3 rounded-lg hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Guardando...
-              </>
-            ) : (
-              'Guardar en Calendario'
-            )}
-          </button>
-        </form>
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
+          {error}
+        </div>
       )}
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
-        </div>
-      ) : Object.keys(groupedEvents).length === 0 ? (
-        <div className="bg-white rounded-lg p-12 text-center border border-gray-100">
-          <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-gray-900">No hay eventos programados</h3>
-          <p className="text-gray-500 mt-1">Organiza tu taller y tus instalaciones aquí.</p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {Object.entries(groupedEvents).map(([month, monthEvents]) => (
-            <div key={month} className="space-y-4">
-              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{month}</h2>
-              <div className="space-y-3">
-                {monthEvents.map((event) => {
-                  const cfg = statusConfig[event.status]
-                  const StatusIcon = cfg.icon
-                  return (
-                    <div key={event.id} className="bg-white rounded-lg p-4 md:p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${cfg.color}`}>
-                              <StatusIcon className="w-3 h-3" />
-                              {cfg.label}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(event.start_date + 'T00:00:00').toLocaleDateString('es-PR', { weekday: 'short', day: 'numeric' })}
-                              {event.start_date !== event.end_date && ` - ${new Date(event.end_date + 'T00:00:00').toLocaleDateString('es-PR', { day: 'numeric' })}`}
-                            </span>
-                          </div>
-                          <h3 className="text-base font-bold text-gray-900">{event.title}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{event.client_name}</p>
-                          {event.notes && <p className="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded italic">{event.notes}</p>}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {event.status === 'scheduled' && (
-                            <button
-                              onClick={() => updateStatus(event.id, 'in_progress')}
-                              className="px-4 py-2 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-lg hover:bg-yellow-100 transition-colors"
-                            >
-                              Iniciar
-                            </button>
-                          )}
-                          {event.status !== 'completed' && (
-                            <button
-                              onClick={() => updateStatus(event.id, 'completed')}
-                              className="px-4 py-2 bg-green-50 text-green-700 text-xs font-bold rounded-lg hover:bg-green-100 transition-colors"
-                            >
-                              Completar
-                            </button>
-                          )}
-                          <button
-                            onClick={() => deleteEvent(event.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+      {showForm && (
+        <div className="mb-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Nuevo Evento</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Título del Evento</label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Ej. Fabricación Screen S001"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Cliente</label>
+                <input
+                  type="text"
+                  value={form.client_name}
+                  onChange={(e) => setForm({ ...form, client_name: e.target.value })}
+                  placeholder="Nombre del cliente"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
+                  required
+                />
               </div>
             </div>
-          ))}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Fecha Inicio</label>
+                <input
+                  type="date"
+                  value={form.start_date}
+                  onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Fecha Fin</label>
+                <input
+                  type="date"
+                  value={form.end_date}
+                  onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Estado</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as any })}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
+                >
+                  <option value="scheduled">Programado</option>
+                  <option value="in_progress">En Proceso</option>
+                  <option value="completed">Completado</option>
+                  <option value="cancelled">Cancelado</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Notas</label>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Detalles adicionales..."
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all resize-none h-24"
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-6 py-2.5 border border-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-6 py-2.5 bg-orange-600 text-white rounded-lg font-bold hover:bg-orange-700 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  'Guardar Evento'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {events.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+          <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">No hay eventos programados</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {events.map((event) => {
+            const config = statusConfig[event.status]
+            const StatusIcon = config.icon
+            return (
+              <div key={event.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${config.color}`}>
+                        <StatusIcon className="w-3 h-3" />
+                        {config.label}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">Cliente: {event.client_name}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(event.start_date).toLocaleDateString('es-PR')} - {new Date(event.end_date).toLocaleDateString('es-PR')}
+                    </p>
+                    {event.notes && <p className="text-sm text-gray-600 mt-2 italic">{event.notes}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <select
+                      value={event.status}
+                      onChange={(e) => updateStatus(event.id, e.target.value as any)}
+                      className="px-3 py-1.5 text-xs font-bold border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-50 outline-none transition-all"
+                    >
+                      <option value="scheduled">Programado</option>
+                      <option value="in_progress">En Proceso</option>
+                      <option value="completed">Completado</option>
+                      <option value="cancelled">Cancelado</option>
+                    </select>
+                    <button
+                      onClick={() => deleteEvent(event.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

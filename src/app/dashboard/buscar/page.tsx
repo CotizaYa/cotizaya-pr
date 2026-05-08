@@ -8,9 +8,9 @@ interface Fabricante {
   id: string
   business_name: string
   full_name: string
-  avatar_url: string
-  business_address: string
-  phone: string
+  avatar_url: string | null
+  business_address: string | null
+  phone: string | null
 }
 
 export default function BuscarFabricantesPage() {
@@ -18,20 +18,45 @@ export default function BuscarFabricantesPage() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Fabricante[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [searched, setSearched] = useState(false)
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    if (!query) return
+    if (!query.trim()) {
+      setError('Por favor ingresa un término de búsqueda')
+      return
+    }
+
     setLoading(true)
+    setError(null)
+    setSearched(true)
 
     try {
-      const { data } = await supabase
+      const searchTerm = `%${query.trim()}%`
+
+      // Buscar en business_name y full_name
+      const { data, error: queryError } = await supabase
         .from('profiles')
         .select('id, business_name, full_name, avatar_url, business_address, phone')
-        .or(`business_name.ilike.%${query}%,full_name.ilike.%${query}%`)
+        .or(`business_name.ilike.${searchTerm},full_name.ilike.${searchTerm}`)
         .limit(20)
 
+      if (queryError) {
+        console.error('Error en búsqueda:', queryError)
+        setError('Error al buscar fabricantes')
+        setResults([])
+        return
+      }
+
       setResults(data || [])
+      if (!data || data.length === 0) {
+        setError('No se encontraron fabricantes con ese término')
+      }
+    } catch (err) {
+      console.error('Error en handleSearch:', err)
+      setError('Error inesperado al buscar')
+      setResults([])
     } finally {
       setLoading(false)
     }
@@ -53,19 +78,32 @@ export default function BuscarFabricantesPage() {
           />
           <button
             type="submit"
-            className="absolute right-2 top-2 bottom-2 bg-orange-600 text-white px-6 rounded-lg font-bold hover:bg-orange-700 transition-all active:scale-95 flex items-center gap-2"
+            disabled={loading}
+            className="absolute right-2 top-2 bottom-2 bg-orange-600 text-white px-6 rounded-lg font-bold hover:bg-orange-700 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
           >
-            <Search className="w-4 h-4" />
-            Buscar
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Search className="w-4 h-4" />
+                Buscar
+              </>
+            )}
           </button>
         </form>
       </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium text-center">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
         </div>
-      ) : results.length > 0 ? (
+      ) : searched && results.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {results.map((fab) => (
             <div key={fab.id} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-start gap-6 group">
@@ -78,56 +116,41 @@ export default function BuscarFabricantesPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-bold text-gray-900 truncate">{fab.business_name || fab.full_name}</h3>
-                <p className="text-sm text-gray-500 font-medium flex items-center gap-1 mt-1">
-                  <MapPin className="w-3 h-3 text-orange-500" /> {fab.business_address || 'Puerto Rico'}
-                </p>
-                <div className="flex items-center gap-2 mt-4">
-                  <a
-                    href={`tel:${fab.phone}`}
-                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors flex items-center gap-2"
-                  >
-                    <Phone className="w-3 h-3" />
-                    Llamar
-                  </a>
-                  <button className="bg-orange-50 text-orange-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-orange-100 transition-colors flex items-center gap-2">
-                    Ver Perfil
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
+                <p className="text-sm text-gray-500 mt-1">{fab.full_name}</p>
+                
+                {fab.phone && (
+                  <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
+                    <Phone className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                    <a href={`tel:${fab.phone}`} className="hover:text-orange-600 transition-colors">
+                      {fab.phone}
+                    </a>
+                  </div>
+                )}
+                
+                {fab.business_address && (
+                  <div className="flex items-start gap-2 mt-2 text-sm text-gray-600">
+                    <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <span className="line-clamp-2">{fab.business_address}</span>
+                  </div>
+                )}
               </div>
+              <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-orange-600 transition-colors flex-shrink-0 mt-1" />
             </div>
           ))}
         </div>
-      ) : query && !loading ? (
-        <div className="text-center py-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+      ) : searched && results.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
           <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-gray-900">No encontramos resultados</h3>
-          <p className="text-gray-500 mt-1">Intenta con otros términos de búsqueda.</p>
+          <p className="text-gray-500 font-medium">No se encontraron resultados</p>
+          <p className="text-gray-400 text-sm mt-1">Intenta con otro término de búsqueda</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest text-center">Pueblos Populares</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['San Juan', 'Bayamón', 'Carolina', 'Ponce', 'Caguas', 'Guaynabo', 'Mayagüez', 'Trujillo Alto'].map(pueblo => (
-              <button
-                key={pueblo}
-                onClick={() => setQuery(pueblo)}
-                className="bg-white p-4 rounded-xl border border-gray-100 text-center font-bold text-gray-600 hover:border-orange-500 hover:text-orange-600 transition-all shadow-sm"
-              >
-                {pueblo}
-              </button>
-            ))}
-          </div>
+        <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+          <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Busca fabricantes en Puerto Rico</p>
+          <p className="text-gray-400 text-sm mt-1">Ingresa un nombre o pueblo para comenzar</p>
         </div>
       )}
-      
-      <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-8 rounded-2xl text-white text-center shadow-xl">
-        <h3 className="text-2xl font-bold mb-2">¿Eres fabricante?</h3>
-        <p className="text-orange-100 mb-6 max-w-xl mx-auto font-medium">Únete a la red más grande de fabricantes en Puerto Rico y recibe prospectos directamente en tu dashboard.</p>
-        <button className="bg-white text-orange-600 font-bold px-10 py-4 rounded-xl hover:bg-orange-50 transition-all shadow-lg active:scale-95">
-          Publicar mi Taller
-        </button>
-      </div>
     </div>
   )
 }

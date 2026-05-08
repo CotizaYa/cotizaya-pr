@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { QuickCalculator } from "@/components/quote-builder/QuickCalculator";
 import { formatUSD } from "@/lib/calculations";
+import { ChevronLeft, Search, Package } from "lucide-react";
 
 interface Product {
   id: string;
@@ -49,7 +50,7 @@ const CAT_IMAGES: Record<string, string> = {
   screen_ac: "/products/screen-ventana.png",
   closet: "/products/closet-cristal.png",
   garaje: "/products/puerta-doble-vidrio.png",
-  miscelanea: "ICON_ACCESSORY",
+  miscelanea: "ICON_PACKAGE",
 };
 
 // Mapeo específico por código de producto
@@ -91,24 +92,52 @@ export default function NuevaCotizacionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setError("No autenticado");
+          return;
+        }
 
-      const [productsRes, pricesRes] = await Promise.all([
-        supabase.from("products").select("*").eq("is_active", true),
-        supabase.from("user_prices").select("*").eq("user_id", user.id),
-      ]);
+        // Cargar productos
+        const { data: productsData, error: productsError } = await supabase
+          .from("products")
+          .select("*")
+          .eq("is_active", true);
 
-      setProducts(productsRes.data ?? []);
-      const pricesMap: Record<string, number> = {};
-      (pricesRes.data ?? []).forEach((p: any) => {
-        pricesMap[p.product_id] = p.price;
-      });
-      setUserPrices(pricesMap);
-      setIsLoading(false);
+        if (productsError) {
+          console.error("Error cargando productos:", productsError);
+          setError("Error al cargar productos");
+          return;
+        }
+
+        setProducts(productsData ?? []);
+
+        // Cargar precios del usuario
+        const { data: pricesData, error: pricesError } = await supabase
+          .from("user_prices")
+          .select("*")
+          .eq("user_id", user.id);
+
+        if (pricesError) {
+          console.error("Error cargando precios:", pricesError);
+        }
+
+        const pricesMap: Record<string, number> = {};
+        (pricesData ?? []).forEach((p: any) => {
+          pricesMap[p.product_id] = p.price;
+        });
+        setUserPrices(pricesMap);
+      } catch (err) {
+        console.error("Error en loadData:", err);
+        setError("Error al cargar datos");
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadData();
   }, [supabase]);
@@ -197,16 +226,14 @@ export default function NuevaCotizacionPage() {
   const getProductImage = (p: Product): string => {
     if (p.imagen_url) return p.imagen_url;
     if (p.code && PRODUCT_IMAGES[p.code]) return PRODUCT_IMAGES[p.code];
-    return CAT_IMAGES[p.category] || "ICON_ACCESSORY";
+    return CAT_IMAGES[p.category] || "ICON_PACKAGE";
   };
 
   const renderProductImage = (imagePath: string) => {
-    if (imagePath === "ICON_ACCESSORY") {
+    if (imagePath === "ICON_PACKAGE") {
       return (
         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
-          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m6 2a8 8 0 11-16 0 8 8 0 0116 0zm-7 5a1 1 0 11-2 0 1 1 0 012 0zm0 4a1 1 0 11-2 0 1 1 0 012 0zm4-4a1 1 0 11-2 0 1 1 0 012 0zm0 4a1 1 0 11-2 0 1 1 0 012 0z" />
-          </svg>
+          <Package className="w-12 h-12 text-gray-400" />
         </div>
       );
     }
@@ -234,6 +261,16 @@ export default function NuevaCotizacionPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="text-center">
+          <p className="text-red-600 font-bold text-lg">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (selectedProduct) {
     return (
       <div className="flex flex-col h-screen bg-white">
@@ -242,7 +279,7 @@ export default function NuevaCotizacionPage() {
             onClick={() => setSelectedProduct(null)}
             className="flex items-center gap-2 text-xs font-bold text-gray-600 uppercase tracking-widest hover:text-[#F97316] transition-colors active:scale-95"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+            <ChevronLeft className="w-4 h-4" />
             Volver al catálogo
           </button>
         </div>
@@ -268,7 +305,7 @@ export default function NuevaCotizacionPage() {
         </div>
 
         <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
             type="text"
             placeholder="Buscar producto..."
@@ -331,7 +368,7 @@ export default function NuevaCotizacionPage() {
             disabled={isSaving}
             className="w-full bg-[#F97316] hover:bg-orange-600 text-white font-bold py-3 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
           >
-            {isSaving ? "Guardando..." : " GUARDAR COTIZACIÓN"}
+            {isSaving ? "Guardando..." : "GUARDAR COTIZACIÓN"}
           </button>
         </div>
       )}

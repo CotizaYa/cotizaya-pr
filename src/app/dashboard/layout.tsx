@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client'
 import {
   Home,
   FileText,
-  Briefcase,
   Users,
   Scissors,
   Calendar,
@@ -31,7 +30,6 @@ const NAV_GROUPS = [
     items: [
       { href: '/dashboard', label: 'Inicio', icon: Home, exact: true },
       { href: '/dashboard/cotizaciones', label: 'Cotizaciones', icon: FileText },
-      { href: '/dashboard/projects', label: 'Proyectos', icon: Briefcase },
       { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
     ],
   },
