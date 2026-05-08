@@ -17,7 +17,7 @@ import {
   Zap,
   LogOut
 } from 'lucide-react'
-import ApiKeyForm from './ApiKeyForm'
+import { ApiKeyForm } from './ApiKeyForm'
 
 export default function PerfilPage() {
   const supabase = createClient()
