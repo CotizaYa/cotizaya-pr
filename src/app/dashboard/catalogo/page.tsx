@@ -1,9 +1,10 @@
 'use client'
 
+import React from 'react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronRight, Grid3x3, Loader2 } from 'lucide-react'
+import { ChevronRight, Grid3x3, Loader2, DoorOpen, Wind, Layers, Blinds, Warehouse, Wrench, Square } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
 import { ProductVisual } from '@/components/product/ProductVisual'
 
@@ -17,14 +18,17 @@ interface Product {
   unit_label: string | null
 }
 
-const CATEGORY_ICONS: Record<string, any> = {
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   screen: <Grid3x3 className="w-6 h-6" />,
-  puerta: <Grid3x3 className="w-6 h-6" />,
-  ventana: <Grid3x3 className="w-6 h-6" />,
-  closet: <Grid3x3 className="w-6 h-6" />,
-  garaje: <Grid3x3 className="w-6 h-6" />,
-  screen_ac: <Grid3x3 className="w-6 h-6" />,
-  miscelanea: <Grid3x3 className="w-6 h-6" />,
+  puerta: <DoorOpen className="w-6 h-6" />,
+  ventana: <Wind className="w-6 h-6" />,
+  closet: <Layers className="w-6 h-6" />,
+  garaje: <Warehouse className="w-6 h-6" />,
+  screen_ac: <Square className="w-6 h-6" />,
+  miscelanea: <Wrench className="w-6 h-6" />,
+  aluminio: <Wrench className="w-6 h-6" />,
+  cristal: <Square className="w-6 h-6" />,
+  tornilleria: <Wrench className="w-6 h-6" />,
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -44,8 +48,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   closet: 'Puertas de Closet',
   garaje: 'Puertas de Garaje',
   screen_ac: 'Screens A/C',
-  miscelanea: 'Servicios',
+  miscelanea: 'Servicios y Mano de Obra',
+  aluminio: 'Perfilería de Aluminio',
+  cristal: 'Cristalería y Vidrio',
+  tornilleria: 'Tornillería y Fijación',
 }
+
+// Categorías que son "productos finales" para cotizar directamente
+const MAIN_CATEGORIES = ['screen', 'puerta', 'ventana', 'closet', 'garaje', 'screen_ac']
 
 export default function CatalogoDashboardPage() {
   const supabase = createClient()

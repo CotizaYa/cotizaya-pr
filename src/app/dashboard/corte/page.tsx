@@ -8,10 +8,12 @@ import { Plus, Loader2, Scissors, ArrowRight, AlertCircle } from 'lucide-react'
 interface CutSheet {
   id: string
   name: string
-  client_name: string
+  product_type: string
   material: string
-  total_pieces: number
-  status: 'draft' | 'ready' | 'in_production' | 'completed'
+  total_bars_needed: number | null
+  total_linear_inches: number | null
+  status: string
+  notes: string | null
   created_at: string
 }
 
@@ -35,7 +37,7 @@ export default function CortePage() {
 
       const { data } = await supabase
         .from('cut_sheets')
-        .select('id, name, client_name, material, total_pieces, status, created_at')
+        .select('id, name, product_type, material, total_bars_needed, total_linear_inches, status, notes, created_at')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -98,11 +100,15 @@ export default function CortePage() {
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 font-medium">
-                    <span>{sheet.client_name || 'Sin cliente'}</span>
+                    <span>{sheet.product_type || 'General'}</span>
                     <span className="text-gray-300">•</span>
                     <span>{sheet.material}</span>
-                    <span className="text-gray-300">•</span>
-                    <span>{sheet.total_pieces} piezas</span>
+                    {sheet.total_bars_needed != null && (
+                      <>
+                        <span className="text-gray-300">•</span>
+                        <span>{sheet.total_bars_needed} barras</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
