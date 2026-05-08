@@ -281,27 +281,85 @@ function GlassRender() {
 function renderByCode(code: string | null, category: string | null) {
   const c = (code ?? '').toUpperCase()
   const cat = (category ?? '').toLowerCase()
+
+  // ── Screens ──
   if (c === 'S001') return <ScreenDoor double={false} />
   if (c === 'S002') return <ScreenDoor double={true} />
   if (c === 'S003') return <ScreenWindow />
+  if (c === 'S010') return <ScreenDoor double={false} />   // Heavy Duty
+  if (c === 'S011') return <ScreenDoor double={false} />   // Extra Ancha
+  if (c === 'S012') return <ScreenDoor double={true} />    // Doble Extra Ancha
+  if (c === 'S013') return <ScreenWindow />                // Ventana Doble
+  if (c === 'S014') return <ScreenWindow />                // Corredizo 2P
+  if (c === 'S015') return <ScreenWindow />                // Corredizo 3P
+  if (c === 'S016') return <ScreenWindow />                // Proyectante
+  if (c === 'S017') return <ScreenWindow />                // A/C
+  if (c === 'S018') return <ScreenDoor double={true} />   // Patio Corrediza
+  if (c === 'S019') return <ScreenDoor double={true} />   // Acordeón 3P
+  if (c === 'S020') return <ScreenDoor double={false} />  // Paso Premium
+
+  // ── Puertas ──
   if (c === 'P001') return <SingleDoorGlass />
   if (c === 'P002') return <DoubleDoorGlass />
   if (c === 'P003') return <PivotDoor />
+  if (c === 'P004') return <SingleDoorGlass />    // Sólido
+  if (c === 'P005') return <DoubleDoorGlass />    // Doble Sólido
+  if (c === 'P006') return <DoubleDoorGlass />    // Panel Fijo Lateral
+  if (c === 'P007') return <DoubleDoorGlass />    // 2 Paneles Fijos
+  if (c === 'P008') return <SingleDoorGlass />    // Corrediza Sencilla
+  if (c === 'P009') return <DoubleDoorGlass />    // Corrediza Doble
+  if (c === 'P010') return <SingleDoorGlass />    // Ventana Superior
+  if (c === 'P011') return <SingleDoorGlass />    // Celosías
+  if (c === 'P012') return <DoubleDoorGlass />    // Acordeón 2P
+  if (c === 'P013') return <DoubleDoorGlass />    // Acordeón 4P
+  if (c === 'P014') return <SingleDoorGlass />    // Marco Pesado
+  if (c === 'P015') return <DoubleDoorGlass />    // Doble Con Transomé
+
+  // ── Ventanas ──
   if (c === 'V001') return <WindowProjecting />
   if (c === 'V002') return <WindowCasement />
   if (c === 'V003') return <WindowSliding />
   if (c === 'V004') return <WindowFixed />
+  if (c === 'V005') return <WindowFixed />        // Celosías Fijas
+  if (c === 'V006') return <WindowCasement />     // Celosías Abatibles
+  if (c === 'V007') return <WindowSliding />      // 3 Paneles
+  if (c === 'V008') return <WindowSliding />      // 4 Paneles
+  if (c === 'V009') return <WindowCasement />     // Guillotina
+  if (c === 'V010') return <WindowFixed />        // Jalousie
+  if (c === 'V011') return <WindowCasement />     // Pivote
+  if (c === 'V012') return <WindowFixed />        // Panorámica
+  if (c === 'V013') return <WindowProjecting />   // Proyectante Pesado
+  if (c === 'V014') return <WindowCasement />     // Batiente 1H
+  if (c === 'V015') return <WindowProjecting />   // Batiente 2H
+
+  // ── Closets ──
   if (c === 'C001') return <ClosetDoor panels={2} />
   if (c === 'C002') return <ClosetDoor panels={3} />
   if (c === 'C003') return <ClosetDoor panels={4} />
+  if (c === 'C004') return <ClosetDoor panels={2} />   // Espejo 2H
+  if (c === 'C005') return <ClosetDoor panels={3} />   // Espejo 3H
+  if (c === 'C006') return <ClosetDoor panels={4} />   // Espejo 4H
+  if (c === 'C007') return <ClosetDoor panels={2} />   // Opaco 2H
+  if (c === 'C008') return <ClosetDoor panels={3} />   // Opaco 3H
+  if (c === 'C009') return <ClosetDoor panels={2} />   // Estampado 2H
+  if (c === 'C010') return <ClosetDoor panels={3} />   // Estampado 3H
+  if (c === 'C011') return <ClosetDoor panels={2} />   // Marco Ancho 2H
+  if (c === 'C012') return <ClosetDoor panels={2} />   // Esmerilado 2H
+  if (c === 'C013') return <ClosetDoor panels={3} />   // Esmerilado 3H
+
+  // ── Materials ──
   if (cat === 'cristal' || c.startsWith('CR')) return <GlassRender />
-  if (cat === 'aluminio' || c.startsWith('A0') || c.startsWith('S0')) return <MaterialRender label="PERFIL" />
-  if (cat === 'tornilleria' || c.startsWith('T0')) return <MaterialRender label="FIJACIÓN" />
-  if (cat === 'miscelanea' || c.startsWith('M0')) return <MaterialRender label="ACCESORIO" />
+  if (cat === 'aluminio' || c.startsWith('A')) return <MaterialRender label="PERFIL" />
+  if (cat === 'tornilleria' || c.startsWith('T')) return <MaterialRender label="FIJACIÓN" />
+  if (cat === 'miscelanea' || c.startsWith('M')) return <MaterialRender label="ACCESORIO" />
+  if (c.startsWith('S')) return <MaterialRender label="PERFIL" />
+
+  // ── Category fallback ──
   if (cat === 'screen') return <ScreenDoor />
   if (cat === 'puerta') return <SingleDoorGlass />
   if (cat === 'ventana') return <WindowSliding />
   if (cat === 'closet') return <ClosetDoor panels={2} />
+
   return <MaterialRender label="PRODUCTO" />
 }
 
@@ -327,3 +385,4 @@ export function ProductVisual({ category, code, className, compact = false }: Pr
 }
 
 export type { ProductVisualProps }
+// This file is intentionally left here for append detection

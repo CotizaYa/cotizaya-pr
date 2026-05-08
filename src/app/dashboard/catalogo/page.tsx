@@ -17,7 +17,7 @@ interface Product {
   unit_label: string | null
 }
 
-const MAIN_CATEGORIES = ['screen', 'puerta', 'ventana', 'closet', 'garaje']
+const MAIN_CATEGORIES = ['screen', 'puerta', 'ventana', 'closet']
 
 const CATEGORY_META: Record<string, { label: string; icon: React.ReactNode; color: string; accent: string }> = {
   screen:    { label: 'Puertas de Screen',     icon: <Grid3x3 className="w-7 h-7" />,    color: 'bg-teal-50',   accent: 'border-teal-500 text-teal-700' },

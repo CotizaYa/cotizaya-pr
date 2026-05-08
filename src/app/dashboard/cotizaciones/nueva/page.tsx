@@ -65,8 +65,9 @@ function NuevaCotizacionContent() {
 
         const [productsRes, pricesRes] = await Promise.all([
           supabase.from('products').select('*').eq('is_active', true)
-            .in('category', ['screen', 'puerta', 'ventana', 'closet', 'garaje', 'screen_ac'])
-            .or(`owner_id.is.null,owner_id.eq.${user.id}`),
+            .in('category', ['screen', 'puerta', 'ventana', 'closet'])
+            .or(`owner_id.is.null,owner_id.eq.${user.id}`)
+            .order('category').order('code'),
           supabase.from('user_prices').select('*').eq('user_id', user.id),
         ])
 
