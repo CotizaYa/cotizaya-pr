@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { getSupabaseUnavailableMessage, isSupabaseConfigured } from '@/lib/supabase/config'
 import { Search, MapPin, Phone, Mail, Loader2, ChevronRight, Building2 } from 'lucide-react'
 
 interface Fabricante {
@@ -38,6 +39,12 @@ export default function BuscarFabricantesPublicoPage() {
     setError(null)
 
     try {
+      if (!isSupabaseConfigured()) {
+        setError(getSupabaseUnavailableMessage('directory'))
+        setFabricantes([])
+        return
+      }
+
       const { data, error: rpcError } = await supabase.rpc('search_public_fabricantes', {
         p_search: searchQuery,
         p_city: cityFilter,
@@ -45,7 +52,7 @@ export default function BuscarFabricantesPublicoPage() {
 
       if (rpcError) {
         console.error('Error en búsqueda pública de fabricantes:', rpcError)
-        setError('No se pudo consultar el directorio en este momento. Intenta de nuevo o vuelve al catálogo público.')
+        setError(getSupabaseUnavailableMessage('directory'))
         setFabricantes([])
         return
       }
@@ -56,7 +63,7 @@ export default function BuscarFabricantesPublicoPage() {
       }
     } catch (err) {
       console.error('Error inesperado en búsqueda pública:', err)
-      setError('No se pudo consultar el directorio en este momento. Intenta de nuevo o vuelve al catálogo público.')
+      setError(getSupabaseUnavailableMessage('directory'))
       setFabricantes([])
     } finally {
       setLoading(false)
@@ -160,7 +167,7 @@ export default function BuscarFabricantesPublicoPage() {
           <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-12 text-center">
             <Search className="mx-auto mb-4 h-12 w-12 text-slate-300" />
             <h2 className="text-xl font-black text-slate-950">No hay fabricantes para esos filtros</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-slate-600">Prueba otra ciudad, vuelve al catálogo técnico o publica tu negocio para que futuros clientes encuentren tu perfil cuando la cuenta esté configurada.</p>
+            <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-slate-600">Prueba otra ciudad, vuelve al catálogo técnico o publica tu negocio para que futuros clientes encuentren tu perfil cuando producción esté conectada a Supabase.</p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
               <Link href="/catalogo" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-black text-slate-900 transition hover:border-slate-400">
                 Ver catálogo técnico

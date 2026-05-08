@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { getSupabaseUnavailableMessage, isSupabaseConfigured } from '@/lib/supabase/config'
 import { Loader2, LogIn, ShieldCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -21,6 +22,11 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      if (!isSupabaseConfigured()) {
+        setError(getSupabaseUnavailableMessage('login'))
+        return
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -29,7 +35,12 @@ export default function LoginPage() {
       if (error) throw error
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión')
+      const message = err?.message || 'Error al iniciar sesión'
+      setError(
+        message === 'Load failed' || message === 'Failed to fetch'
+          ? getSupabaseUnavailableMessage('login')
+          : message
+      )
     } finally {
       setLoading(false)
     }
