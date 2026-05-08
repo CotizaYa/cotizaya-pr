@@ -1,8 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr";
-import { getSupabaseBrowserConfig } from "./config";
+import { getSafeSupabaseBrowserConfig } from "./config";
 
 export function createClient() {
-  const { url, anonKey } = getSupabaseBrowserConfig();
+  const { url, anonKey } = getSafeSupabaseBrowserConfig();
 
   return createBrowserClient(url, anonKey);
 }

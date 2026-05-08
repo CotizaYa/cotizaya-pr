@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { getSupabaseUnavailableMessage, isSupabaseConfigured } from '@/lib/supabase/config'
+import { getSupabaseConfigStatus, getSupabaseUnavailableMessage } from '@/lib/supabase/config'
 import { Loader2, LogIn, ShieldCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -13,8 +13,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
   const router = useRouter()
+
+  const getFriendlyAuthError = (message: string) => {
+    const normalized = message.toLowerCase()
+
+    if (normalized.includes('invalid login credentials')) {
+      return 'Email o contraseña incorrectos. Si todavía no tienes cuenta, crea una cuenta primero.'
+    }
+
+    if (normalized.includes('email not confirmed')) {
+      return 'Tu email todavía no está confirmado. Revisa tu correo antes de iniciar sesión.'
+    }
+
+    if (normalized.includes('load failed') || normalized.includes('failed to fetch') || normalized.includes('fetch')) {
+      return 'No se pudo conectar con Supabase. Verifica que producción tenga NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY reales en Vercel.'
+    }
+
+    return message || 'Error al iniciar sesión'
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,25 +39,30 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      if (!isSupabaseConfigured()) {
+      const configStatus = getSupabaseConfigStatus()
+      if (!configStatus.configured) {
         setError(getSupabaseUnavailableMessage('login'))
         return
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
         password,
       })
 
       if (error) throw error
-      router.push('/dashboard')
+
+      if (!data.session) {
+        setError('Supabase aceptó la solicitud, pero no devolvió una sesión activa. Intenta nuevamente o confirma tu email.')
+        return
+      }
+
+      router.replace('/dashboard')
+      router.refresh()
     } catch (err: any) {
       const message = err?.message || 'Error al iniciar sesión'
-      setError(
-        message === 'Load failed' || message === 'Failed to fetch'
-          ? getSupabaseUnavailableMessage('login')
-          : message
-      )
+      setError(getFriendlyAuthError(message))
     } finally {
       setLoading(false)
     }
@@ -137,7 +159,7 @@ export default function LoginPage() {
 
             <div className="mt-6">
               <Link
-                href="/register"
+                href="/registro"
                 className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
               >
                 Crear cuenta gratis (14 días trial)

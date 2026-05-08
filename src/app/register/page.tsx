@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { getSupabaseConfigStatus, getSupabaseUnavailableMessage } from '@/lib/supabase/config'
 import { Loader2, ArrowRight, ShieldCheck } from 'lucide-react'
 
 export default function RegisterPage() {
@@ -11,16 +12,24 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const [success, setSuccess] = useState<string | null>(null)
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setSuccess(null)
 
     try {
+      const configStatus = getSupabaseConfigStatus()
+      if (!configStatus.configured) {
+        setError(getSupabaseUnavailableMessage('register'))
+        return
+      }
+
+      const supabase = createClient()
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -28,9 +37,14 @@ export default function RegisterPage() {
       })
 
       if (error) throw error
-      alert('¡Registro exitoso! Por favor verifica tu email.')
+      setSuccess('Registro recibido. Si Supabase requiere confirmación, revisa tu email antes de iniciar sesión.')
     } catch (err: any) {
-      setError(err.message || 'Error al registrarse')
+      const message = err?.message || 'Error al registrarse'
+      setError(
+        message === 'Load failed' || message === 'Failed to fetch'
+          ? getSupabaseUnavailableMessage('register')
+          : message
+      )
     } finally {
       setLoading(false)
     }
@@ -58,6 +72,11 @@ export default function RegisterPage() {
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
                 {error}
+              </div>
+            )}
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                {success}
               </div>
             )}
             <div>
