@@ -25,7 +25,7 @@ export default async function DashboardPage() {
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('quotes').select('id, total, status').eq('owner_id', user.id).gte('created_at', startOfMonth),
     supabase.from('quotes').select('id, total, status').eq('owner_id', user.id).gte('created_at', startOfLastMonth).lte('created_at', endOfLastMonth),
-    supabase.from('quotes').select('id, client_name, total, status, created_at, public_token').eq('owner_id', user.id).order('created_at', { ascending: false }).limit(5),
+    supabase.from('quotes').select('id, quote_number, total, status, created_at, public_token, clients(full_name)').eq('owner_id', user.id).order('created_at', { ascending: false }).limit(5),
     supabase.from('clients').select('*', { count: 'exact', head: true }).eq('owner_id', user.id),
     supabase.from('quotes').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).eq('status', 'sent'),
     supabase.from('production_events').select('id, title, start_date, status, color').eq('owner_id', user.id).gte('start_date', now.toISOString().split('T')[0]).order('start_date').limit(5),

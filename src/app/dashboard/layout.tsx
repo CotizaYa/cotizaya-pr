@@ -11,19 +11,14 @@ import {
   Scissors,
   Calendar,
   BarChart3,
-  CreditCard,
-  Truck,
   DollarSign,
-  Search,
   Zap,
-  MessageSquare,
   Settings,
   Bell,
   LogOut,
   Plus,
   Loader2,
   Grid3x3,
-  Package,
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -31,14 +26,13 @@ const NAV_GROUPS = [
     label: 'Principal',
     items: [
       { href: '/dashboard', label: 'Inicio', icon: Home, exact: true },
-      { href: '/dashboard/catalogo', label: 'Catálogo', icon: Grid3x3 },
-      { href: '/dashboard/mis-productos', label: 'Mis Productos', icon: Package },
       { href: '/dashboard/cotizaciones', label: 'Cotizaciones', icon: FileText },
+      { href: '/dashboard/catalogo', label: 'Catálogo', icon: Grid3x3 },
       { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
     ],
   },
   {
-    label: 'Producción',
+    label: 'Taller',
     items: [
       { href: '/dashboard/corte', label: 'Hojas de Corte', icon: Scissors },
       { href: '/dashboard/calendario', label: 'Calendario', icon: Calendar },
@@ -47,18 +41,14 @@ const NAV_GROUPS = [
   {
     label: 'Negocio',
     items: [
-      { href: '/dashboard/reportes', label: 'Reportes', icon: BarChart3 },
-      { href: '/dashboard/pagos', label: 'Pagos', icon: CreditCard },
-      { href: '/dashboard/suplidores', label: 'Suplidores', icon: Truck },
       { href: '/dashboard/precios', label: 'Mis Precios', icon: DollarSign },
+      { href: '/dashboard/reportes', label: 'Reportes', icon: BarChart3 },
     ],
   },
   {
     label: 'Herramientas',
     items: [
-      { href: '/dashboard/buscar', label: 'Buscar Fabricantes', icon: Search },
       { href: '/dashboard/asistente', label: 'Asistente IA', icon: Zap },
-      { href: '/dashboard/chatbot', label: 'Chatbot WhatsApp', icon: MessageSquare },
     ],
   },
   {

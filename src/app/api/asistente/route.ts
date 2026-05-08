@@ -6,19 +6,21 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  // Get user's own API key
+  // Use system API key — no need for users to have their own key
+  // User's personal key overrides if they have one (power users)
   const { data: profile } = await supabase
     .from("profiles")
     .select("anthropic_api_key")
     .eq("id", user.id)
     .single();
 
-  const apiKey = profile?.anthropic_api_key;
+  const apiKey = profile?.anthropic_api_key || process.env.ANTHROPIC_API_KEY;
+
   if (!apiKey) {
     return NextResponse.json({
-      error: "NO_API_KEY",
-      message: "Necesitas configurar tu API Key de Anthropic en Configuración para usar el Asistente IA."
-    }, { status: 402 });
+      error: "SERVICE_UNAVAILABLE",
+      message: "El servicio de IA no está disponible en este momento."
+    }, { status: 503 });
   }
 
   const body = await req.json();
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
+      max_tokens: 1024,
       ...body,
       tools: [{ type: "web_search_20250305", name: "web_search" }],
     }),

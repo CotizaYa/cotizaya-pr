@@ -75,12 +75,12 @@ export default function AsistentePage() {
 
       const data = await response.json()
 
-      if (data.error === 'NO_API_KEY') {
+      if (data.error === 'NO_API_KEY' || data.error === 'SERVICE_UNAVAILABLE') {
         setMessages((prev) => [
           ...prev,
           {
             role: 'assistant',
-            content: 'Para usar el Asistente IA necesitas configurar tu API Key de Anthropic. Ve a Configuración y sigue las instrucciones.',
+            content: 'El servicio de IA no está disponible en este momento. Por favor intenta más tarde.',
             timestamp: new Date(),
           },
         ])
