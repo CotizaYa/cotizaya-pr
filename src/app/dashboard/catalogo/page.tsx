@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ChevronRight, Grid3x3, Loader2 } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
+import Image from 'next/image'
 
 interface Product {
   id: string
@@ -230,8 +231,17 @@ export default function CatalogoDashboardPage() {
                     className="bg-white border border-gray-200 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg transition-all group"
                   >
                     <div className="mb-4">
-                      <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-3">
-                        <Grid3x3 className="w-12 h-12 text-gray-400" />
+                      <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-3 relative overflow-hidden">
+                        {product.code && ['G001', 'G012', 'M001', 'S001', 'C001'].includes(product.code) ? (
+                          <Image
+                            src={`/models/${product.code}.png`}
+                            alt={product.name}
+                            fill
+                            className="object-contain p-2"
+                          />
+                        ) : (
+                          <Grid3x3 className="w-12 h-12 text-gray-400" />
+                        )}
                       </div>
                     </div>
                     
