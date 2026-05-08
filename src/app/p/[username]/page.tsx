@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Phone, Mail, MapPin, Grid3x3, Loader2, ChevronRight } from 'lucide-react'
+import { Phone, Mail, MapPin, Loader2, ChevronRight } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
+import { ProductVisual } from '@/components/product/ProductVisual'
 
 interface Product {
   id: string
@@ -42,7 +43,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function PublicProfilePage() {
   const params = useParams()
   const username = params.username as string
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const [profile, setProfile] = useState<PublicProfile | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -228,9 +229,7 @@ export default function PublicProfilePage() {
                         className="bg-white border border-gray-200 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg transition-all group"
                       >
                         <div className="mb-4">
-                          <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-3">
-                            <Grid3x3 className="w-12 h-12 text-gray-400" />
-                          </div>
+                          <ProductVisual category={product.category} code={product.code} name={product.name} className="h-40 mb-3" />
                         </div>
                         
                         <div className="space-y-2">

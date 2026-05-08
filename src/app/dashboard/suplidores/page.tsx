@@ -58,6 +58,7 @@ export default function SuplidoresPage() {
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSuplidor, setEditingSuplidor] = useState<Suplidor | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -76,6 +77,7 @@ export default function SuplidoresPage() {
   const loadSuplidores = async () => {
     try {
       setLoading(true)
+      setErrorMessage(null)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
@@ -87,8 +89,14 @@ export default function SuplidoresPage() {
 
       if (error) throw error
       setSuplidores(data || [])
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error cargando suplidores:', err)
+      const message = err?.message || ''
+      if (message.includes('suppliers') || message.includes('does not exist') || message.includes('schema cache')) {
+        setErrorMessage('El directorio de suplidores necesita que se aplique la migración de Supabase para activar el guardado de proveedores.')
+      } else {
+        setErrorMessage('No se pudieron cargar los suplidores. Intenta nuevamente en unos segundos.')
+      }
     } finally {
       setLoading(false)
     }
@@ -127,9 +135,10 @@ export default function SuplidoresPage() {
         whatsapp: ''
       })
       loadSuplidores()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error guardando suplidor:', err)
-      alert('Error al guardar el suplidor')
+      const message = err?.message || 'Error al guardar el suplidor'
+      alert(message.includes('schema cache') || message.includes('does not exist') ? 'El módulo de suplidores requiere aplicar la migración de Supabase antes de guardar proveedores.' : message)
     }
   }
 
@@ -190,8 +199,8 @@ export default function SuplidoresPage() {
           <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Truck className="w-8 h-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">No hay suplidores aún</h3>
-          <p className="text-gray-500 mt-1">Agrega tus proveedores frecuentes para facilitar tus pedidos.</p>
+          <h3 className="text-lg font-bold text-gray-900">{errorMessage ? 'Suplidores pendiente de configuración' : 'No hay suplidores aún'}</h3>
+          <p className="text-gray-500 mt-1">{errorMessage || 'Agrega tus proveedores frecuentes para facilitar tus pedidos.'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

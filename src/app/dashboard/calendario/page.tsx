@@ -22,6 +22,13 @@ const statusConfig = {
   cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-700', icon: X },
 }
 
+function formatCalendarDbError(message: string) {
+  if (message.includes('production_events') || message.includes('schema cache') || message.includes('does not exist')) {
+    return 'El calendario necesita que se aplique la migración production_events en Supabase para poder guardar eventos.'
+  }
+  return 'No se pudo completar la acción del calendario. Intenta nuevamente en unos segundos.'
+}
+
 export default function CalendarioPage() {
   const supabase = createClient()
   const [events, setEvents] = useState<ProductionEvent[]>([])
@@ -56,14 +63,14 @@ export default function CalendarioPage() {
 
       if (queryError) {
         console.error('Error cargando eventos:', queryError)
-        setError('Error al cargar eventos')
+        setError(formatCalendarDbError(queryError.message || ''))
         return
       }
 
       setEvents(data || [])
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error en loadEvents:', err)
-      setError('Error al cargar eventos')
+      setError(formatCalendarDbError(err?.message || ''))
     } finally {
       setLoading(false)
     }
@@ -107,7 +114,7 @@ export default function CalendarioPage() {
 
       if (insertError) {
         console.error('Error al insertar evento:', insertError)
-        setError(`Error al guardar evento: ${insertError.message}`)
+        setError(formatCalendarDbError(insertError.message || ''))
         setSubmitting(false)
         return
       }
@@ -123,9 +130,9 @@ export default function CalendarioPage() {
       })
       setShowForm(false)
       await loadEvents()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error en handleSubmit:', err)
-      setError('Error inesperado al guardar evento')
+      setError(formatCalendarDbError(err?.message || ''))
     } finally {
       setSubmitting(false)
     }
