@@ -38,7 +38,7 @@ export function QuoteBuilder({
   const [clientId, setClientId] = useState("");
   const [quoteNumber, setQuoteNumber] = useState(suggestedQuoteNumber);
   const [notes, setNotes] = useState("");
-  const [ivuRate, setIvuRate] = useState(0.115);
+  const [ivuRate, setIvuRate] = useState(0);
   const [depositRate, setDepositRate] = useState(0.50);
   const [pending, start] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -265,7 +265,7 @@ export function QuoteBuilder({
           {[
             ["Materiales", totals.subtotalMaterials],
             ["Mano de obra", totals.subtotalLabor],
-            [`IVU (${(ivuRate*100).toFixed(1)}%)`, totals.ivuAmount],
+            [`IVU (0%)`, 0],
           ].map(([label, val]) => (
             <div key={String(label)} style={{ display:"flex", justifyContent:"space-between", marginBottom:"4px" }}>
               <span style={{ fontSize:"13px", color:"#525252" }}>{label}</span>

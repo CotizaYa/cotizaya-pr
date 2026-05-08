@@ -81,7 +81,7 @@ export function QuoteBuilderStep3() {
       ...item,
       category_snapshot: item.product_snapshot.category,
     })),
-    ivuRate: 0.115,
+    ivuRate: 0,
     depositRate: parseFloat(depositRate) / 100,
   });
 
@@ -156,8 +156,8 @@ export function QuoteBuilderStep3() {
           status: "draft",
           subtotal_materials: subtotalMaterials,
           subtotal_labor: 0,
-          ivu_rate: 0.115,
-          ivu_amount: ivuAmount,
+          ivu_rate: 0,
+          ivu_amount: 0,
           total,
           deposit_rate: parseFloat(depositRate) / 100,
           deposit_amount: depositAmount,
@@ -358,7 +358,7 @@ export function QuoteBuilderStep3() {
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-xs font-bold text-gray-600">IVU (11.5%)</span>
+            <span className="text-xs font-bold text-gray-600">IVU (0%)</span>
             <span className="text-sm font-bold text-gray-900">
               {formatUSD(ivuAmount)}
             </span>

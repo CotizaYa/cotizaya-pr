@@ -138,7 +138,7 @@ export default async function CotizacionDetailPage({ params }: { params: Promise
         {[
           ["Subtotal materiales", quote.subtotal_materials],
           ["Mano de obra", quote.subtotal_labor],
-          [`IVU (${(Number(quote.ivu_rate)*100).toFixed(1)}%)`, quote.ivu_amount],
+          [`IVU (0%)`, 0],
         ].map(([l,v]) => (
           <div key={String(l)} style={{ display:"flex", justifyContent:"space-between", marginBottom:"4px" }}>
             <span style={{ fontSize:"13px", color:"#737373" }}>{l}</span>

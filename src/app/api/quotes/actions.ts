@@ -27,7 +27,7 @@ export async function createQuote(rawInput: unknown) {
   if (!user) return { ok: false as const, error: "No autorizado" };
 
   const input = rawInput as any;
-  const ivuRate = Number(input.ivuRate) || 0.115;
+  const ivuRate = Number(input.ivuRate) || 0;
   const depositRate = Number(input.depositRate) || 0.50;
   const items = input.items || [];
 

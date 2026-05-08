@@ -82,7 +82,7 @@ export function calcQuoteTotals(params: {
   }
 
   const subtotalBeforeIvu = subtotalMaterials + subtotalLabor;
-  const ivuAmount = Math.round(subtotalBeforeIvu * ivuRate * 100) / 100;
+  const ivuAmount = 0;
   const total = Math.round((subtotalBeforeIvu + ivuAmount) * 100) / 100;
   const depositAmount = Math.round(total * depositRate * 100) / 100;
   const balanceAmount = total - depositAmount;

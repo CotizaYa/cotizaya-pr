@@ -157,8 +157,8 @@ function NuevaCotizacionContent() {
 
     setIsSaving(true)
     const subtotalVal = quoteItems.reduce((sum, item) => sum + item.line_total, 0)
-    const ivu = subtotalVal * 0.115
-    const total = subtotalVal + ivu
+    const ivu = 0
+    const total = subtotalVal
 
     const year = new Date().getFullYear()
     const rand = Math.floor(Math.random() * 900) + 100
@@ -173,7 +173,7 @@ function NuevaCotizacionContent() {
         subtotal_materials: subtotalVal,
         subtotal_labor: 0,
         ivu_amount: ivu,
-        ivu_rate: 0.115,
+        ivu_rate: 0,
         total,
         deposit_rate: 0.50,
         deposit_amount: total * 0.5,
@@ -220,8 +220,8 @@ function NuevaCotizacionContent() {
   }
 
   const subtotal = quoteItems.reduce((sum, item) => sum + item.line_total, 0)
-  const ivu = subtotal * 0.115
-  const total = subtotal + ivu
+  const ivu = 0
+  const total = subtotal
 
   // PASO 1: Seleccionar Modelo
   if (step === 1 && !selectedProduct) {
