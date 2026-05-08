@@ -4,32 +4,33 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, LogIn, ShieldCheck } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { Loader2, ArrowRight, ShieldCheck } from 'lucide-react'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
-  const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       })
 
       if (error) throw error
-      router.push('/dashboard')
+      alert('¡Registro exitoso! Por favor verifica tu email.')
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión')
+      setError(err.message || 'Error al registrarse')
     } finally {
       setLoading(false)
     }
@@ -44,16 +45,16 @@ export default function LoginPage() {
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-black text-gray-900">
-          Bienvenido de nuevo
+          Comienza tu prueba de 14 días
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Accede a tu panel de control de CotizaYa
+          Sin tarjeta de crédito. Cancela cuando quieras.
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleLogin}>
+          <form className="space-y-6" onSubmit={handleRegister}>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
                 {error}
@@ -61,7 +62,7 @@ export default function LoginPage() {
             )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+                Email Profesional
               </label>
               <div className="mt-1">
                 <input
@@ -87,11 +88,12 @@ export default function LoginPage() {
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  placeholder="Mínimo 6 caracteres"
                 />
               </div>
             </div>
@@ -106,8 +108,8 @@ export default function LoginPage() {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    Iniciar sesión
-                    <LogIn className="ml-2 w-4 h-4" />
+                    Crear mi cuenta gratis
+                    <ArrowRight className="ml-2 w-4 h-4" />
                   </>
                 )}
               </button>
@@ -120,16 +122,16 @@ export default function LoginPage() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">¿Eres nuevo?</span>
+                <span className="px-2 bg-white text-gray-500">¿Ya tienes cuenta?</span>
               </div>
             </div>
 
             <div className="mt-6">
               <Link
-                href="/register"
+                href="/login"
                 className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
               >
-                Crear cuenta gratis (14 días trial)
+                Iniciar sesión
               </Link>
             </div>
           </div>
