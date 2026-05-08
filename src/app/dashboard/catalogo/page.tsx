@@ -232,16 +232,33 @@ export default function CatalogoDashboardPage() {
                   >
                     <div className="mb-4">
                       <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-3 relative overflow-hidden">
-                        {product.code && ['G001', 'G012', 'M001', 'S001', 'C001'].includes(product.code) ? (
-                          <Image
-                            src={`/models/${product.code}.png`}
-                            alt={product.name}
-                            fill
-                            className="object-contain p-2"
-                          />
-                        ) : (
-                          <Grid3x3 className="w-12 h-12 text-gray-400" />
-                        )}
+                        {(() => {
+                          const getImageForCategory = (category: string) => {
+                            switch (category?.toLowerCase()) {
+                              case 'puerta':
+                              case 'garaje':
+                                return '/models/door-generic.png';
+                              case 'ventana':
+                                return '/models/window-generic.png';
+                              case 'screen':
+                              case 'screen_ac':
+                                return '/models/screen-generic.png';
+                              default:
+                                return null;
+                            }
+                          };
+                          const imagePath = getImageForCategory(product.category);
+                          return imagePath ? (
+                            <Image
+                              src={imagePath}
+                              alt={product.name}
+                              fill
+                              className="object-contain p-2"
+                            />
+                          ) : (
+                            <Grid3x3 className="w-12 h-12 text-gray-400" />
+                          );
+                        })()}
                       </div>
                     </div>
                     
