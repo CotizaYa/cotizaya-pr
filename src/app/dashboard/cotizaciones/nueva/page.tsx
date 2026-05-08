@@ -1,190 +1,175 @@
 'use client'
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { QuickCalculator } from "@/components/quote-builder/QuickCalculator";
-import { formatUSD } from "@/lib/calculations";
-import { ChevronLeft, Search, Package } from "lucide-react";
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { ChevronLeft, ChevronRight, Loader2, Package } from 'lucide-react'
+import { formatUSD, parseFraction, calcLineTotal } from '@/lib/calculations'
 
 interface Product {
-  id: string;
-  code: string | null;
-  name: string;
-  category: string;
-  price_type: string;
-  base_price: number;
-  unit_label: string | null;
-  is_active: boolean;
-  imagen_url?: string | null;
+  id: string
+  code: string | null
+  name: string
+  category: string
+  price_type: string
+  base_price: number
+  unit_label: string | null
+  is_active: boolean
 }
 
 interface QuoteItem {
-  id: string;
-  product_id: string;
-  product_snapshot: any;
-  width_inches: number;
-  height_inches: number;
-  quantity: number;
-  color: string;
-  line_total: number;
+  product_id: string
+  product_snapshot: any
+  width_inches: number
+  height_inches: number
+  quantity: number
+  color: string
+  line_total: number
 }
 
-const CAT_ORDER = ["puerta", "ventana", "screen", "screen_ac", "closet", "garaje", "miscelanea"];
+const COLORS = [
+  { name: 'Blanco', value: 'blanco', hex: '#FFFFFF', border: 'border-gray-200' },
+  { name: 'Negro', value: 'negro', hex: '#000000', border: 'border-black' },
+  { name: 'Bronce', value: 'bronce', hex: '#4A3728', border: 'border-[#4A3728]' },
+  { name: 'Beige', value: 'beige', hex: '#F5F5DC', border: 'border-[#E1E1C0]' },
+  { name: 'Champagne', value: 'champagne', hex: '#E7D1B1', border: 'border-[#D4B991]' },
+]
 
-const CAT_LABEL: Record<string, string> = {
-  puerta: "Puertas",
-  ventana: "Ventanas",
-  screen: "Screens",
-  screen_ac: "Screen A/C",
-  closet: "Closets",
-  garaje: "Garaje",
-  miscelanea: "Servicios",
-};
+function NuevaCotizacionContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const supabase = createClient()
 
-// Mapeo de imágenes locales por categoría (fallback si no hay imagen_url)
-const CAT_IMAGES: Record<string, string> = {
-  puerta: "/products/puerta-sencilla-vidrio.png",
-  ventana: "/products/ventana-corrediza.png",
-  screen: "/products/screen-puerta.png",
-  screen_ac: "/products/screen-ventana.png",
-  closet: "/products/closet-cristal.png",
-  garaje: "/products/puerta-doble-vidrio.png",
-  miscelanea: "ICON_PACKAGE",
-};
+  const [step, setStep] = useState(1)
+  const [products, setProducts] = useState<Product[]>([])
+  const [userPrices, setUserPrices] = useState<Record<string, number>>({})
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
 
-// Mapeo específico por código de producto
-const PRODUCT_IMAGES: Record<string, string> = {
-  P001: "/products/puerta-sencilla-vidrio.png",
-  P002: "/products/puerta-doble-vidrio.png",
-  P003: "/products/puerta-pivot.png",
-  V001: "/products/ventana-proyectante.png",
-  V002: "/products/ventana-casement.png",
-  V003: "/products/ventana-corrediza.png",
-  V004: "/products/ventana-fija.png",
-  S001: "/products/screen-puerta.png",
-  S002: "/products/screen-puerta.png",
-  S003: "/products/screen-ventana.png",
-  C001: "/products/closet-cristal.png",
-  C002: "/products/closet-cristal.png",
-  C003: "/products/closet-cristal.png",
-};
-
-// Colores de acento por categoría
-const CAT_ACCENT: Record<string, string> = {
-  puerta: "#3B82F6",
-  ventana: "#06B6D4",
-  screen: "#14B8A6",
-  screen_ac: "#6366F1",
-  closet: "#8B5CF6",
-  garaje: "#64748B",
-  miscelanea: "#F97316",
-};
-
-export default function NuevaCotizacionPage() {
-  const router = useRouter();
-  const supabase = createClient();
-
-  const [products, setProducts] = useState<Product[]>([]);
-  const [userPrices, setUserPrices] = useState<Record<string, number>>({});
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  // Paso 2: Medidas
+  const [width, setWidth] = useState('')
+  const [height, setHeight] = useState('')
+  const [quantity, setQuantity] = useState('1')
+  const [color, setColor] = useState('blanco')
+  const [notes, setNotes] = useState('')
+  const [lineTotal, setLineTotal] = useState(0)
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setError("No autenticado");
-          return;
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const [productsRes, pricesRes] = await Promise.all([
+          supabase.from('products').select('*').eq('is_active', true),
+          supabase.from('user_prices').select('*').eq('user_id', user.id),
+        ])
+
+        setProducts(productsRes.data ?? [])
+        const pricesMap: Record<string, number> = {}
+        ;(pricesRes.data ?? []).forEach((p: any) => {
+          pricesMap[p.product_id] = p.price
+        })
+        setUserPrices(pricesMap)
+
+        // Si viene modelo del catálogo, seleccionarlo
+        const modeloParam = searchParams.get('modelo')
+        if (modeloParam && productsRes.data) {
+          const product = productsRes.data.find(p => p.code === modeloParam)
+          if (product) {
+            setSelectedProduct(product)
+            setStep(2)
+          }
         }
-
-        // Cargar productos
-        const { data: productsData, error: productsError } = await supabase
-          .from("products")
-          .select("*")
-          .eq("is_active", true);
-
-        if (productsError) {
-          console.error("Error cargando productos:", productsError);
-          setError("Error al cargar productos");
-          return;
-        }
-
-        setProducts(productsData ?? []);
-
-        // Cargar precios del usuario
-        const { data: pricesData, error: pricesError } = await supabase
-          .from("user_prices")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (pricesError) {
-          console.error("Error cargando precios:", pricesError);
-        }
-
-        const pricesMap: Record<string, number> = {};
-        (pricesData ?? []).forEach((p: any) => {
-          pricesMap[p.product_id] = p.price;
-        });
-        setUserPrices(pricesMap);
-      } catch (err) {
-        console.error("Error en loadData:", err);
-        setError("Error al cargar datos");
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
-    loadData();
-  }, [supabase]);
+    }
+    loadData()
+  }, [supabase, searchParams])
 
-  const groupedProducts = CAT_ORDER.map((cat) => ({
-    cat,
-    label: CAT_LABEL[cat],
-    products: products
-      .filter((p) => p.category === cat)
-      .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase())),
-  })).filter((g) => g.products.length > 0);
+  // Calcular total de línea cuando cambian medidas o cantidad
+  useEffect(() => {
+    if (!selectedProduct) return
 
-  const handleAddToQuote = (item: any) => {
+    if (selectedProduct.price_type === 'por_unidad') {
+      const qty = parseInt(quantity) || 1
+      const price = userPrices[selectedProduct.id] ?? selectedProduct.base_price
+      setLineTotal(price * qty)
+    } else {
+      const w = parseFraction(width)
+      const h = parseFraction(height)
+      const qty = parseInt(quantity) || 1
+
+      if (w > 0 && h > 0) {
+        const total = calcLineTotal({
+          widthInches: w,
+          heightInches: h,
+          unitPrice: userPrices[selectedProduct.id] ?? selectedProduct.base_price,
+          quantity: qty,
+          priceType: selectedProduct.price_type as any,
+        })
+        setLineTotal(total)
+      } else {
+        setLineTotal(0)
+      }
+    }
+  }, [width, height, quantity, selectedProduct, userPrices])
+
+  const handleAddToQuote = () => {
+    if (!selectedProduct) return
+
+    const w = selectedProduct.price_type === 'por_unidad' ? 0 : parseFraction(width)
+    const h = selectedProduct.price_type === 'por_unidad' ? 0 : parseFraction(height)
+    const qty = parseInt(quantity) || 1
+
     const newItem: QuoteItem = {
-      id: Math.random().toString(),
-      product_id: item.product_id,
-      product_snapshot: item.product_snapshot,
-      width_inches: item.width_inches,
-      height_inches: item.height_inches,
-      quantity: item.quantity,
-      color: item.color,
-      line_total: item.line_total,
-    };
+      product_id: selectedProduct.id,
+      product_snapshot: {
+        code: selectedProduct.code,
+        name: selectedProduct.name,
+        category: selectedProduct.category,
+        price_type: selectedProduct.price_type,
+        base_price: userPrices[selectedProduct.id] ?? selectedProduct.base_price,
+      },
+      width_inches: w,
+      height_inches: h,
+      quantity: qty,
+      color,
+      line_total: lineTotal,
+    }
 
-    setQuoteItems([...quoteItems, newItem]);
-    setSelectedProduct(null);
-  };
+    setQuoteItems([...quoteItems, newItem])
+    setSelectedProduct(null)
+    setStep(1)
+    setWidth('')
+    setHeight('')
+    setQuantity('1')
+    setColor('blanco')
+    setNotes('')
+  }
 
   const handleSaveQuote = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || quoteItems.length === 0) return;
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || quoteItems.length === 0) return
 
-    setIsSaving(true);
-    const subtotalVal = quoteItems.reduce((sum, item) => sum + item.line_total, 0);
-    const ivu = subtotalVal * 0.115;
-    const total = subtotalVal + ivu;
+    setIsSaving(true)
+    const subtotalVal = quoteItems.reduce((sum, item) => sum + item.line_total, 0)
+    const ivu = subtotalVal * 0.115
+    const total = subtotalVal + ivu
 
-    const year = new Date().getFullYear();
-    const rand = Math.floor(Math.random() * 900) + 100;
-    const quoteNumber = `COT-${year}-${rand}`;
+    const year = new Date().getFullYear()
+    const rand = Math.floor(Math.random() * 900) + 100
+    const quoteNumber = `COT-${year}-${rand}`
 
     const { data: quote, error } = await supabase
-      .from("quotes")
+      .from('quotes')
       .insert({
         owner_id: user.id,
         quote_number: quoteNumber,
-        status: "draft",
+        status: 'draft',
         subtotal_materials: subtotalVal,
         subtotal_labor: 0,
         ivu_amount: ivu,
@@ -194,184 +179,261 @@ export default function NuevaCotizacionPage() {
         deposit_amount: total * 0.5,
       })
       .select()
-      .single();
+      .single()
 
     if (error || !quote) {
-      console.error("Error al guardar cotización:", error);
-      setIsSaving(false);
-      return;
+      console.error('Error al guardar cotización:', error)
+      setIsSaving(false)
+      return
     }
 
-    await supabase.from("quote_items").insert(
+    await supabase.from('quote_items').insert(
       quoteItems.map((item, index) => ({
         quote_id: quote.id,
         product_id: item.product_id,
         name_snapshot: item.product_snapshot.name,
-        category_snapshot: item.product_snapshot.category || "miscelanea",
-        price_type_snapshot: item.product_snapshot.price_type || "sqft",
+        category_snapshot: item.product_snapshot.category,
+        price_type_snapshot: item.product_snapshot.price_type,
         unit_price_snapshot: item.product_snapshot.base_price,
         width_inches: item.width_inches,
         height_inches: item.height_inches,
         quantity: item.quantity,
         line_total: item.line_total,
-        metadata: { color: item.color, product_snapshot: item.product_snapshot },
+        metadata: { color: item.color },
         position: index,
       }))
-    );
+    )
 
-    setIsSaving(false);
-    router.push(`/dashboard/cotizaciones/${quote.id}`);
-  };
-
-  const getProductImage = (p: Product): string => {
-    if (p.imagen_url) return p.imagen_url;
-    if (p.code && PRODUCT_IMAGES[p.code]) return PRODUCT_IMAGES[p.code];
-    return CAT_IMAGES[p.category] || "ICON_PACKAGE";
-  };
-
-  const renderProductImage = (imagePath: string) => {
-    if (imagePath === "ICON_PACKAGE") {
-      return (
-        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
-          <Package className="w-12 h-12 text-gray-400" />
-        </div>
-      );
-    }
-    return (
-      <img
-        src={imagePath}
-        alt="Producto"
-        className="w-full h-full object-contain drop-shadow-lg"
-      />
-    );
-  };
-
-  const subtotal = quoteItems.reduce((sum, item) => sum + item.line_total, 0);
-  const ivu = subtotal * 0.115;
-  const total = subtotal + ivu;
+    setIsSaving(false)
+    router.push(`/dashboard/cotizaciones/${quote.id}`)
+  }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0F172A]">
+      <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-gray-400 font-bold text-sm">Cargando catálogo...</p>
+          <Loader2 className="w-12 h-12 text-orange-600 animate-spin mx-auto mb-3" />
+          <p className="text-gray-600 font-bold">Cargando...</p>
         </div>
       </div>
-    );
+    )
   }
 
-  if (error) {
+  const subtotal = quoteItems.reduce((sum, item) => sum + item.line_total, 0)
+  const ivu = subtotal * 0.115
+  const total = subtotal + ivu
+
+  // PASO 1: Seleccionar Modelo
+  if (step === 1 && !selectedProduct) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white">
-        <div className="text-center">
-          <p className="text-red-600 font-bold text-lg">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (selectedProduct) {
-    return (
-      <div className="flex flex-col h-screen bg-white">
-        <div className="px-4 pt-4 pb-2">
-          <button
-            onClick={() => setSelectedProduct(null)}
-            className="flex items-center gap-2 text-xs font-bold text-gray-600 uppercase tracking-widest hover:text-[#F97316] transition-colors active:scale-95"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Volver al catálogo
-          </button>
-        </div>
-        <QuickCalculator
-          product={selectedProduct}
-          userPrice={userPrices[selectedProduct.id] ?? selectedProduct.base_price}
-          onAddToQuote={handleAddToQuote}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="pb-32 bg-[#0F172A] min-h-screen">
-      <div className="px-4 pt-4 pb-3 border-b border-white/5 sticky top-0 bg-[#0F172A]/95 backdrop-blur-md z-20">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg font-black text-white tracking-tight">Nueva Cotización</h1>
-          {quoteItems.length > 0 && (
-            <span className="bg-[#F97316] text-white text-xs font-black px-2.5 py-1 rounded-full animate-pulse">
-              {quoteItems.length} {quoteItems.length === 1 ? "item" : "items"}
-            </span>
-          )}
+      <div className="min-h-screen bg-gray-50 pb-32">
+        <div className="bg-white p-4 border-b border-gray-100 sticky top-0 z-10">
+          <h1 className="text-lg font-bold text-gray-900">Paso 1: Selecciona un Modelo</h1>
+          <p className="text-xs text-gray-500 mt-1">Elige de nuestro catálogo o busca uno específico</p>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Buscar producto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-white placeholder:text-gray-500 focus:bg-white/10 focus:ring-2 focus:ring-[#F97316]/30 focus:outline-none focus:border-[#F97316]/50 transition-all"
-          />
-        </div>
-      </div>
-
-      <div className="px-4 py-4 space-y-6">
-        {groupedProducts.map(({ cat, label, products: catProducts }) => (
-          <div key={cat}>
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <div className="w-1 h-5 rounded-full" style={{ backgroundColor: CAT_ACCENT[cat] || "#F97316" }} />
-              <h2 className="text-xs font-black text-white/80 uppercase tracking-wider">{label}</h2>
-              <span className="ml-auto text-[10px] font-bold text-white/30 bg-white/5 px-2 py-0.5 rounded-full">{catProducts.length}</span>
+        <div className="p-4 max-w-6xl mx-auto space-y-6">
+          {products.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
+              <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">No hay productos disponibles</p>
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {catProducts.map((p) => {
-                const price = userPrices[p.id] ?? p.base_price;
-                const imgSrc = getProductImage(p);
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {products.map((p) => {
+                const price = userPrices[p.id] ?? p.base_price
                 return (
                   <button
                     key={p.id}
-                    onClick={() => setSelectedProduct(p)}
-                    className="group relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-2.5 text-left active:scale-[0.96] hover:bg-white/[0.06] hover:border-[#F97316]/30 transition-all duration-200"
+                    onClick={() => {
+                      setSelectedProduct(p)
+                      setStep(2)
+                    }}
+                    className="bg-white p-4 rounded-xl border border-gray-200 hover:border-orange-500 hover:shadow-md transition-all active:scale-95 text-left"
                   >
-                    <div className="w-full aspect-square bg-gradient-to-br from-white/[0.05] to-white/[0.02] rounded-xl mb-2.5 flex items-center justify-center overflow-hidden border border-white/[0.05]">
-                      {renderProductImage(imgSrc)}
+                    <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg mb-3 flex items-center justify-center">
+                      <Package className="w-8 h-8 text-gray-400" />
                     </div>
-
-                    <p className="text-[11px] font-bold text-white/90 leading-tight line-clamp-2 mb-1.5">
-                      {p.name}
-                    </p>
-                    <p className="text-[10px] text-white/50 mb-2">{formatUSD(price)}</p>
+                    <p className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">{p.name}</p>
+                    <p className="text-xs text-gray-500 mb-2">{p.code}</p>
+                    <p className="text-sm font-bold text-orange-600">{formatUSD(price)}</p>
                   </button>
-                );
+                )
               })}
             </div>
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
 
-      {quoteItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4 shadow-lg">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Subtotal</p>
-              <p className="text-lg font-black text-gray-900">{formatUSD(subtotal)}</p>
+        {quoteItems.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Subtotal</p>
+                <p className="text-lg font-black text-gray-900">{formatUSD(subtotal)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 font-medium">Total</p>
+                <p className="text-2xl font-black text-orange-600">{formatUSD(total)}</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-gray-500 font-medium">Total</p>
-              <p className="text-2xl font-black text-[#F97316]">{formatUSD(total)}</p>
-            </div>
+            <button
+              onClick={handleSaveQuote}
+              disabled={isSaving}
+              className="w-full bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700 transition-all disabled:opacity-50"
+            >
+              {isSaving ? 'Guardando...' : `Guardar Cotización (${quoteItems.length} items)`}
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // PASO 2: Medidas
+  if (step === 2 && selectedProduct) {
+    const showMeasures = ['por_pie_cuadrado', 'por_pie_lineal'].includes(selectedProduct.price_type)
+
+    return (
+      <div className="min-h-screen bg-gray-50 pb-32">
+        <div className="bg-white p-4 border-b border-gray-100 sticky top-0 z-10 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">Paso 2: Medidas</h1>
+            <p className="text-xs text-gray-500 mt-1">{selectedProduct.name}</p>
           </div>
           <button
-            onClick={handleSaveQuote}
-            disabled={isSaving}
-            className="w-full bg-[#F97316] hover:bg-orange-600 text-white font-bold py-3 rounded-2xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
+            onClick={() => {
+              setSelectedProduct(null)
+              setStep(1)
+            }}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-all"
           >
-            {isSaving ? "Guardando..." : "GUARDAR COTIZACIÓN"}
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
           </button>
         </div>
-      )}
-    </div>
-  );
+
+        <div className="p-4 max-w-lg mx-auto space-y-6">
+          {showMeasures && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-2">Ancho (")</label>
+                <input
+                  type="text"
+                  value={width}
+                  onChange={(e) => setWidth(e.target.value)}
+                  placeholder="ej. 36 1/2"
+                  className="w-full h-12 px-4 text-lg font-bold bg-white border border-gray-200 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-2">Alto (")</label>
+                <input
+                  type="text"
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
+                  placeholder="ej. 72"
+                  className="w-full h-12 px-4 text-lg font-bold bg-white border border-gray-200 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-2">Cantidad</label>
+            <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-gray-100">
+              <button
+                onClick={() => setQuantity(Math.max(1, parseInt(quantity) - 1).toString())}
+                className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-xl text-xl font-bold text-gray-400 hover:text-orange-600 transition-colors"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value || '1')}
+                className="flex-1 text-center text-xl font-bold bg-transparent outline-none"
+              />
+              <button
+                onClick={() => setQuantity((parseInt(quantity) + 1).toString())}
+                className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-xl text-xl font-bold text-gray-400 hover:text-orange-600 transition-colors"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-3">Color del Perfil</label>
+            <div className="grid grid-cols-5 gap-3">
+              {COLORS.map(({ name, value, hex }) => (
+                <button
+                  key={value}
+                  onClick={() => setColor(value)}
+                  className="flex flex-col items-center gap-2 group"
+                >
+                  <div
+                    className={`w-full aspect-square rounded-xl border-2 flex items-center justify-center transition-all shadow-sm ${
+                      color === value
+                        ? 'border-orange-500 ring-4 ring-orange-50 scale-105'
+                        : 'border-gray-100 hover:border-gray-300'
+                    }`}
+                    style={{ backgroundColor: hex }}
+                  >
+                    {color === value && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                  </div>
+                  <span className={`text-[9px] font-bold uppercase tracking-tighter ${color === value ? 'text-orange-600' : 'text-gray-400'}`}>
+                    {name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-orange-600 rounded-2xl p-6 text-white shadow-xl">
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-xs font-bold uppercase opacity-80">Total del Item</p>
+                <p className="text-3xl font-black mt-1">{formatUSD(lineTotal)}</p>
+              </div>
+              <div className="text-right opacity-80">
+                <p className="text-xs font-bold uppercase">Precio Unitario</p>
+                <p className="text-sm font-bold">{formatUSD(userPrices[selectedProduct.id] ?? selectedProduct.base_price)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-20">
+          <div className="max-w-lg mx-auto flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setSelectedProduct(null)
+                setStep(1)
+              }}
+              className="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleAddToQuote}
+              disabled={showMeasures && (!width || !height)}
+              className="flex items-center gap-2 bg-orange-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-orange-700 transition-all disabled:opacity-50"
+            >
+              <span>Agregar</span>
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+export default function NuevaCotizacionPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="w-12 h-12 text-orange-600 animate-spin" /></div>}>
+      <NuevaCotizacionContent />
+    </Suspense>
+  )
 }
