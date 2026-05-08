@@ -40,7 +40,7 @@ function categorizeProfiles(items: OptimizedProfileItem[]) {
       t.includes('cerradura') ||
       t.includes('gozne') ||
       t.includes('silicón') ||
-      t.includes('screen')
+      t.includes('malla')
     ) {
       miscelaneos.push(item)
     } else {
