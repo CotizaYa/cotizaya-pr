@@ -1,249 +1,232 @@
-// ============================================================
-// COTIZAYA PR — /share/[token]/page.tsx
-// Página pública de cotización. 100% aislada del dashboard.
-// Usa RPC SECURITY DEFINER para acceso público seguro.
-// ============================================================
-
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import ShareActions from './ShareActions'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder')
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
+)
 
-interface PageProps {
-  params: Promise<{ token: string }>
+interface PageProps { params: Promise<{ token: string }> }
+
+const fmt = (n: any) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(n ?? 0))
+
+const fmtDate = (iso?: string | null) =>
+  iso ? new Date(iso).toLocaleDateString('es-PR', { year: 'numeric', month: 'long', day: 'numeric' }) : ''
+
+const CAT_LABEL: Record<string, string> = {
+  puerta: 'Puertas', ventana: 'Ventanas', screen: 'Screens',
+  closet: 'Closets', aluminio: 'Perfilería', cristal: 'Cristalería',
+  tornilleria: 'Tornillería', miscelanea: 'Servicios',
 }
 
-function fmt(n: number | string | null | undefined) {
-  return new Intl.NumberFormat('es-PR', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(Number(n ?? 0))
-}
-
-function fmtFecha(iso: string | null | undefined) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('es-PR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  draft:    { label: 'Borrador',  color: 'bg-gray-100 text-gray-600' },
-  sent:     { label: 'Enviada',   color: 'bg-blue-100 text-blue-700' },
-  viewed:   { label: 'Vista',     color: 'bg-purple-100 text-purple-700' },
-  accepted: { label: 'Aprobada',  color: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Rechazada', color: 'bg-red-100 text-red-700' },
-  cancelled:{ label: 'Cancelada', color: 'bg-gray-100 text-gray-500' },
-  paid:     { label: 'Pagada',    color: 'bg-orange-100 text-orange-700' },
-}
-
-export const revalidate = 0 // No cache — siempre fresco
+export const revalidate = 0
 
 export default async function CotizacionPublicaPage({ params }: PageProps) {
   const { token } = await params
 
-  // ── Usar RPC SECURITY DEFINER para acceso público seguro ──
-  const { data: quote, error } = await supabase.rpc('get_public_quote', {
-    p_token: token,
-  })
+  const { data: quote, error } = await supabase.rpc('get_public_quote', { p_token: token })
+  if (error || !quote?.id) notFound()
 
-  if (error || !quote || !quote.id) notFound()
+  const biz   = quote.profile as any
+  const client = quote.client as any
+  const items  = (quote.items ?? []) as any[]
 
-  const contratista = quote.profile as any
-  const cliente = quote.client as any
-  const items = (quote.items ?? []) as any[]
-  const statusInfo = STATUS_LABEL[quote.status] ?? STATUS_LABEL.sent
-  const ivu_pct = Math.round(Number(quote.ivu_rate ?? 0.115) * 100)
+  const subtotal    = Number(quote.subtotal_materials) + Number(quote.subtotal_labor)
+  const total       = Number(quote.total)
+  const deposito    = Number(quote.deposit_amount) || total * 0.5
+  const balance     = total - deposito
+  const fecha       = fmtDate(quote.created_at)
+  const validHasta  = fmtDate(quote.valid_until)
 
-  // WhatsApp — mensaje de cierre automático
   const waMsg = encodeURIComponent(
-    `Hola ${contratista?.business_name ?? 'CotizaYa'},\n\nQuiero confirmar esta cotización:\n\n${quote.quote_number}\nTotal: ${fmt(quote.total)}\n\nDirección de instalación:\n[Escribe aquí]\n\n¿Cuándo pueden comenzar?`
+    `Hola ${biz?.business_name ?? 'CotizaYa'},\n\nConfirmo cotización ${quote.quote_number}\nTotal: ${fmt(total)}\nDepósito: ${fmt(deposito)}\n\nDirección: [escribe aquí]\n¿Cuándo pueden comenzar?`
   )
-  const rawPhone = contratista?.phone?.replace(/\D/g, '') || ''
-  const waUrl = rawPhone
-    ? `https://wa.me/1${rawPhone}?text=${waMsg}`
-    : `https://wa.me/?text=${waMsg}`
+  const phone = biz?.phone?.replace(/\D/g, '') || ''
+  const waUrl = phone ? `https://wa.me/1${phone}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`
 
-  // Agrupar items por categoría
+  // Group items by category
   const grouped: Record<string, any[]> = {}
   for (const item of items) {
-    const cat = item.category_snapshot || 'General'
+    const cat = item.category_snapshot || 'miscelanea'
     if (!grouped[cat]) grouped[cat] = []
     grouped[cat].push(item)
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-100 py-4 px-2 print:bg-white print:p-0">
+      <div className="max-w-2xl mx-auto bg-white shadow-xl print:shadow-none" id="invoice">
 
-      {/* ── BANNER SUPERIOR ────────────────────────────────────── */}
-      <div className="bg-green-50 border-b border-green-200 px-6 py-3 text-center">
-        <p className="text-green-800 font-bold text-sm">
-          ✅ Cotización lista para instalación
-        </p>
-      </div>
+        {/* ── HEADER: Logo + Invoice title ────────────────────── */}
+        <div className="px-8 pt-8 pb-0">
+          <div className="flex items-start justify-between mb-4">
+            {/* Business identity */}
+            <div className="flex items-center gap-4">
+              {biz?.logo_url ? (
+                <img src={biz.logo_url} alt={biz.business_name} className="h-16 w-auto object-contain" />
+              ) : (
+                <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-black text-2xl">
+                    {(biz?.business_name ?? 'C')[0].toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div>
+                <p className="font-black text-gray-900 text-xl leading-tight">{biz?.business_name ?? 'CotizaYa'}</p>
+                {biz?.phone && <p className="text-sm text-gray-500 mt-0.5">{biz.phone}</p>}
+                {biz?.email && <p className="text-sm text-gray-500">{biz.email}</p>}
+              </div>
+            </div>
+            {/* Invoice badge */}
+            <div className="text-right">
+              <p className="text-4xl font-black text-orange-500 tracking-tight uppercase">Invoice</p>
+              <p className="text-gray-900 font-black text-lg mt-1">{quote.quote_number}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{fecha}</p>
+              {validHasta && <p className="text-xs text-gray-400">Válida hasta {validHasta}</p>}
+            </div>
+          </div>
 
-      {/* ── HEADER ───────────────────────────────────────────── */}
-      <div className="bg-[#0F172A] px-6 pt-10 pb-7">
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <p className="text-white font-black text-xl leading-tight tracking-tight">
-              {contratista?.business_name ?? 'Screen PRO'}
-            </p>
-            {contratista?.phone && (
-              <p className="text-gray-400 text-sm mt-1">
-                {contratista.phone}
+          {/* Orange accent line */}
+          <div className="h-1 bg-orange-500 rounded-full mb-6" />
+        </div>
+
+        {/* ── CLIENT INFO ──────────────────────────────────────── */}
+        <div className="px-8 pb-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Preparado para</p>
+              {client?.full_name ? (
+                <>
+                  <p className="font-black text-gray-900 text-base">{client.full_name}</p>
+                  {client.phone && <p className="text-sm text-gray-600 mt-0.5">Tel: {client.phone}</p>}
+                  {client.address && <p className="text-sm text-gray-600">{client.address}</p>}
+                </>
+              ) : (
+                <p className="text-gray-400 text-sm italic">Cliente no especificado</p>
+              )}
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Detalles</p>
+              <p className="text-sm text-gray-600">Fecha: <span className="font-bold text-gray-900">{fecha}</span></p>
+              <p className="text-sm text-gray-600">Invoice#: <span className="font-bold text-gray-900">{quote.quote_number}</span></p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── PRODUCT TABLE ────────────────────────────────────── */}
+        <div className="px-8 pb-6">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-900 text-white">
+                <th className="text-left px-4 py-3 text-xs font-black uppercase tracking-wider rounded-tl-lg">Producto</th>
+                <th className="text-right px-3 py-3 text-xs font-black uppercase tracking-wider">Precio</th>
+                <th className="text-right px-3 py-3 text-xs font-black uppercase tracking-wider">Cant.</th>
+                <th className="text-right px-4 py-3 text-xs font-black uppercase tracking-wider rounded-tr-lg">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(grouped).map(([cat, catItems]) => (
+                <>
+                  {/* Category subheader */}
+                  <tr key={`cat-${cat}`} className="bg-orange-50">
+                    <td colSpan={4} className="px-4 py-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-orange-600">
+                        {CAT_LABEL[cat] ?? cat}
+                      </span>
+                    </td>
+                  </tr>
+                  {catItems.map((item: any, idx: number) => {
+                    const isPie2 = item.price_type_snapshot === 'por_pie_cuadrado'
+                    const pie2 = isPie2 && item.width_inches && item.height_inches
+                      ? (Number(item.width_inches) * Number(item.height_inches) / 144).toFixed(2)
+                      : null
+                    return (
+                      <tr key={item.id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-4 py-3 text-sm">
+                          <p className="font-bold text-gray-900">{item.name_snapshot}</p>
+                          {isPie2 && item.width_inches && item.height_inches && (
+                            <p className="text-xs text-gray-400">
+                              {Math.round(Number(item.width_inches))}" × {Math.round(Number(item.height_inches))}"{pie2 ? ` · ${pie2} pie²` : ''}
+                              {item.metadata?.color ? ` · ${item.metadata.color}` : ''}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-gray-600 tabular-nums">
+                          {fmt(item.unit_price_snapshot)}{isPie2 ? '/pie²' : ''}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-right text-gray-600 tabular-nums">{item.quantity}</td>
+                        <td className="px-4 py-3 text-sm text-right font-black text-gray-900 tabular-nums">{fmt(item.line_total)}</td>
+                      </tr>
+                    )
+                  })}
+                </>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── TOTALS ───────────────────────────────────────────── */}
+        <div className="px-8 pb-6">
+          <div className="ml-auto max-w-xs space-y-2">
+            <div className="flex justify-between text-sm text-gray-600 border-t border-gray-200 pt-3">
+              <span className="font-bold">SUBTOTAL</span>
+              <span className="tabular-nums font-bold">{fmt(subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-sm border-t border-dashed border-orange-200 pt-2">
+              <span className="font-black text-orange-600">DEPÓSITO</span>
+              <span className="tabular-nums font-black text-orange-600">{fmt(deposito)}</span>
+            </div>
+            <div className="flex justify-between text-sm border-t border-dashed border-orange-200 pt-2">
+              <span className="font-black text-orange-600">BALANCE TOTAL</span>
+              <span className="tabular-nums font-black text-orange-600">{fmt(balance)}</span>
+            </div>
+            {/* Grand total */}
+            <div className="flex justify-between items-baseline bg-gray-900 rounded-xl px-4 py-3 mt-3">
+              <span className="text-white font-black text-base">TOTAL</span>
+              <span className="text-orange-400 font-black text-3xl tabular-nums">{fmt(total)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── TERMS & CONDITIONS ───────────────────────────────── */}
+        <div className="px-8 pb-6">
+          <div className="border border-gray-200 rounded-xl p-4">
+            <p className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">Terms & Conditions</p>
+            {quote.notes ? (
+              <p className="text-xs text-gray-600 leading-relaxed">{quote.notes}</p>
+            ) : (
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Cualquier trabajo adicional debido a vicios ocultos tendrá un costo adicional.
+                El depósito del 50% es requerido para comenzar los trabajos.
+                El balance se paga al completar la instalación.
               </p>
             )}
           </div>
-          <div className="text-right">
-            <p className="text-gray-500 text-[10px] uppercase tracking-[0.15em] mb-1 font-semibold">
-              Cotización
-            </p>
-            <p className="text-white font-black text-2xl tracking-tight">
-              {quote.quote_number}
-            </p>
-            <span className={`inline-block mt-2 text-[11px] font-bold px-2.5 py-1 rounded-full ${statusInfo.color}`}>
-              {statusInfo.label}
-            </span>
-          </div>
         </div>
 
-        <div className="flex items-center gap-3 text-gray-400 text-xs">
-          {quote.valid_until && (
-            <span>Válida hasta {fmtFecha(quote.valid_until)}</span>
-          )}
-        </div>
-      </div>
-
-      {/* ── CLIENTE ────────────────────────────────────────── */}
-      <div className="px-6 py-6 border-b border-gray-100">
-        <p className="text-[10px] text-gray-400 uppercase tracking-[0.15em] font-bold mb-2">
-          Preparado para
-        </p>
-        {cliente?.full_name ? (
-          <>
-            <p className="font-black text-[#0F172A] text-lg">
-              {cliente.full_name}
-            </p>
-            {cliente.phone && (
-              <p className="text-sm text-gray-500 mt-1">{cliente.phone}</p>
-            )}
-            {cliente.address && (
-              <p className="text-sm text-gray-500">{cliente.address}</p>
-            )}
-          </>
-        ) : (
-          <p className="text-gray-400 text-sm italic">Cliente no especificado</p>
-        )}
-      </div>
-
-      {/* ── ITEMS AGRUPADOS POR CATEGORÍA ──────────────────── */}
-      <div className="px-6 py-6">
-        {Object.entries(grouped).map(([category, catItems]) => (
-          <div key={category} className="mb-6 last:mb-0">
-            <p className="text-[10px] text-gray-400 uppercase tracking-[0.15em] font-bold mb-3 border-b border-gray-100 pb-2">
-              {category}
-            </p>
-            <div className="space-y-3">
-              {catItems.map((item: any, idx: number) => {
-                const esPie2 = item.price_type_snapshot === 'por_pie_cuadrado'
-                const esPie = item.price_type_snapshot === 'por_pie_lineal'
-                const pie2 = esPie2 && item.width_inches && item.height_inches
-                  ? (Number(item.width_inches) * Number(item.height_inches) / 144).toFixed(2)
-                  : null
-
-                return (
-                  <div key={item.id || idx} className="flex justify-between items-start gap-3 py-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-[#0F172A] text-[15px] leading-snug">
-                        {item.name_snapshot}
-                      </p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                        {esPie2 && item.width_inches && item.height_inches && (
-                          <span className="text-xs text-gray-400">
-                            {Math.round(Number(item.width_inches))}&quot; × {Math.round(Number(item.height_inches))}&quot;
-                            {pie2 && ` · ${pie2} pie²`}
-                          </span>
-                        )}
-                        {esPie && item.width_inches && (
-                          <span className="text-xs text-gray-400">
-                            {item.width_inches} pies
-                          </span>
-                        )}
-                        <span className="text-xs text-gray-400">
-                          Cant: {item.quantity}
-                        </span>
-                        {item.metadata?.color && (
-                          <span className="text-xs text-gray-400">
-                            Color: {item.metadata.color}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {fmt(item.unit_price_snapshot)}
-                        {esPie2 ? ' / pie²' : esPie ? ' / pie' : ' / und'}
-                      </p>
-                    </div>
-                    <p className="font-black text-[#0F172A] text-[15px] tabular-nums whitespace-nowrap">
-                      {fmt(item.line_total)}
-                    </p>
-                  </div>
-                )
-              })}
+        {/* ── FOOTER ───────────────────────────────────────────── */}
+        <div className="bg-gray-900 px-8 py-5 rounded-b-none">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-center sm:text-left">
+              {biz?.phone && (
+                <p className="text-white font-black text-base">{biz.phone}</p>
+              )}
+              {biz?.email && (
+                <p className="text-orange-400 text-sm">{biz.email}</p>
+              )}
+            </div>
+            <div className="text-center sm:text-right">
+              <p className="text-gray-400 text-xs">Generado con</p>
+              <p className="text-orange-400 font-black text-sm">CotizaYa PR</p>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* ── TOTALES ────────────────────────────────────────── */}
-      <div className="px-6 pb-6">
-        <div className="bg-[#0F172A] rounded-2xl px-6 py-6 space-y-3">
-          <div className="flex justify-between text-sm text-gray-300">
-            <span>Subtotal</span>
-            <span className="tabular-nums font-medium">{fmt(Number(quote.subtotal_materials) + Number(quote.subtotal_labor))}</span>
-          </div>
-
-          {/* TOTAL — dominante */}
-          <div className="flex justify-between items-baseline border-t border-white/20 pt-5">
-            <span className="text-white font-black text-lg">TOTAL</span>
-            <span className="text-[#F97316] font-black text-5xl tabular-nums">
-              {fmt(quote.total)}
-            </span>
-          </div>
-
-
         </div>
-      </div>
 
-      {/* ── NOTA ───────────────────────────────────────────── */}
-      {quote.notes && (
-        <div className="px-6 pb-6">
-          <div className="bg-amber-50 border border-amber-100 rounded-2xl px-5 py-4">
-            <p className="text-[10px] text-amber-600 font-bold uppercase tracking-[0.15em] mb-1">
-              Nota del contratista
-            </p>
-            <p className="text-sm text-amber-800 leading-relaxed">{quote.notes}</p>
-          </div>
+        {/* ── CTA BUTTONS (outside print area) ─────────────────── */}
+        <div className="print:hidden">
+          <ShareActions waUrl={waUrl} token={token} />
         </div>
-      )}
-
-      {/* ── ACCIONES (Client Component) ────────────────────── */}
-      <ShareActions waUrl={waUrl} token={token} />
-
-      {/* ── PIE ────────────────────────────────────────────── */}
-      <div className="px-6 py-5 border-t border-gray-100 text-center">
-        <p className="text-xs text-gray-400">
-          Cotización generada con{' '}
-          <span className="font-bold text-[#F97316]">CotizaYa PR</span>
-        </p>
-        <p className="text-[10px] text-gray-300 mt-1">
-          Precio final listo para instalación · Sujeto a inspección final
-        </p>
       </div>
     </div>
   )

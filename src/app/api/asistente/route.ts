@@ -18,9 +18,9 @@ export async function POST(req: NextRequest) {
 
   if (!apiKey) {
     return NextResponse.json({
-      error: "SERVICE_UNAVAILABLE",
-      message: "El servicio de IA no está disponible en este momento."
-    }, { status: 503 });
+      error: "NO_API_KEY",
+      message: "Para activar el Asistente IA necesitas configurar tu API Key de Anthropic.\n\nVe a **Configuración** → sección 'Asistente IA' → pega tu API Key.\n\nObtén una gratis en: console.anthropic.com"
+    }, { status: 402 });
   }
 
   const body = await req.json();

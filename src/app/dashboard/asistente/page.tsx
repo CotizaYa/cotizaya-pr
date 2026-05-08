@@ -80,7 +80,7 @@ export default function AsistentePage() {
           ...prev,
           {
             role: 'assistant',
-            content: 'El servicio de IA no está disponible en este momento. Por favor intenta más tarde.',
+            content: data.message || 'Para activar el Asistente IA ve a **Configuración** y agrega tu API Key de Anthropic.',
             timestamp: new Date(),
           },
         ])
