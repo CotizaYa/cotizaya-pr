@@ -112,7 +112,7 @@ ALTER TABLE quote_items ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "profiles_own" ON profiles FOR ALL USING (id = auth.uid());
 
 -- Políticas para products (Ver globales + propios)
-CREATE POLICY "products_view" ON products FOR SELECT USING (owner_id IS NULL OR owner_id = auth.uid());
+CREATE POLICY "products_view" ON products FOR SELECT USING (true);
 CREATE POLICY "products_own" ON products FOR ALL USING (owner_id = auth.uid());
 
 -- Políticas para user_prices
