@@ -276,7 +276,7 @@ export default function PerfilPage() {
             <p className="text-xs text-gray-500 font-medium mt-1">Configura tu API Key para el Asistente IA</p>
           </div>
           <div className="p-6">
-            <ApiKeyForm />
+            <ApiKeyForm currentKey={null} />
           </div>
         </div>
 

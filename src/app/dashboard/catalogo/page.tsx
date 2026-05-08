@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronRight, Grid3x3, Loader2, Door, Window, Wind } from 'lucide-react'
+import { ChevronRight, Grid3x3, Loader2 } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
+import { ProductVisual } from '@/components/product/ProductVisual'
 
 interface Product {
   id: string
@@ -230,23 +231,12 @@ export default function CatalogoDashboardPage() {
                     className="bg-white border border-gray-200 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg transition-all group"
                   >
                     <div className="mb-4">
-                      <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-3">
-                        {(() => {
-                          const category = product.category?.toLowerCase();
-                          switch (category) {
-                            case 'puerta':
-                            case 'garaje':
-                              return <Door className="w-16 h-16 text-gray-600" strokeWidth={1.5} />;
-                            case 'ventana':
-                              return <Window className="w-16 h-16 text-gray-600" strokeWidth={1.5} />;
-                            case 'screen':
-                            case 'screen_ac':
-                              return <Wind className="w-16 h-16 text-gray-600" strokeWidth={1.5} />;
-                            default:
-                              return <Grid3x3 className="w-12 h-12 text-gray-400" />;
-                          }
-                        })()}
-                      </div>
+                      <ProductVisual
+                        category={product.category}
+                        code={product.code}
+                        name={product.name}
+                        className="mb-3"
+                      />
                     </div>
                     
                     <div className="space-y-2">

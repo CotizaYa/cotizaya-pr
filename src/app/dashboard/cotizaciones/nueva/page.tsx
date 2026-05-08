@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ChevronLeft, ChevronRight, Loader2, Package } from 'lucide-react'
 import { formatUSD, parseFraction, calcLineTotal } from '@/lib/calculations'
+import { ProductVisual } from '@/components/product/ProductVisual'
 
 interface Product {
   id: string
@@ -251,9 +252,12 @@ function NuevaCotizacionContent() {
                     }}
                     className="bg-white p-4 rounded-xl border border-gray-200 hover:border-orange-500 hover:shadow-md transition-all active:scale-95 text-left"
                   >
-                    <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg mb-3 flex items-center justify-center">
-                      <Package className="w-8 h-8 text-gray-400" />
-                    </div>
+                    <ProductVisual
+                      category={p.category}
+                      code={p.code}
+                      name={p.name}
+                      className="mb-3 h-32"
+                    />
                     <p className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">{p.name}</p>
                     <p className="text-xs text-gray-500 mb-2">{p.code}</p>
                     <p className="text-sm font-bold text-orange-600">{formatUSD(price)}</p>
@@ -312,6 +316,26 @@ function NuevaCotizacionContent() {
         </div>
 
         <div className="p-4 max-w-lg mx-auto space-y-6">
+          <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+            <ProductVisual
+              category={selectedProduct.category}
+              code={selectedProduct.code}
+              name={selectedProduct.name}
+              className="mb-4 h-44"
+            />
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-orange-600">{selectedProduct.code}</p>
+                <h2 className="text-base font-black text-gray-900">{selectedProduct.name}</h2>
+                <p className="text-xs font-bold text-gray-500 mt-1">{selectedProduct.category}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xs font-bold text-gray-500">Precio</p>
+                <p className="text-lg font-black text-gray-900">{formatUSD(userPrices[selectedProduct.id] ?? selectedProduct.base_price)}</p>
+              </div>
+            </div>
+          </div>
+
           {showMeasures && (
             <div className="grid grid-cols-2 gap-4">
               <div>

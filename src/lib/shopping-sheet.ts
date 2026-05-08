@@ -1,345 +1,249 @@
 /**
- * Módulo de Hoja de Compra Visual
- * Genera un documento visual con los perfiles necesarios, cantidades y optimización de material
+ * Motor de Hoja de Compra para CotizaYa.
+ * Genera una lista de materiales práctica para contratistas de puertas,
+ * ventanas y screens en Puerto Rico.
  */
 
 export interface ProfileItem {
-  profileType: string; // 'marco_lateral', 'marco_superior', 'vareta', etc.
-  profileSize: string; // '1/2 x 1/2', '3/4 x 3/4', etc.
-  lengthInches: number; // Longitud de cada pieza individual
-  quantity: number; // Cantidad de piezas de esa longitud
-  unitPrice: number; // Precio por pulgada lineal del perfil
-  color?: string;
-  finish?: string; // 'natural', 'anodizado', 'pintura'
+  profileType: string
+  profileSize: string
+  lengthInches: number
+  quantity: number
+  unitPrice: number
+  color?: string
+  finish?: string
 }
 
 export interface OptimizedProfileItem extends ProfileItem {
-  totalPrice: number; // Precio total de todas las piezas de este tipo
-  stockLengthUsed: number; // Cantidad de barras de stock utilizadas para este perfil
-  wasteInches: number; // Desperdicio total en pulgadas para este perfil
+  totalPrice: number
+  stockLengthUsed: number
+  wasteInches: number
 }
 
 export const formatUSD = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-  }).format(amount);
-};
+  }).format(Number.isFinite(amount) ? amount : 0)
+}
 
 export interface ShoppingSheet {
-  quoteId: string;
-  date: Date;
-  totalLinearFeet: number;
-  totalCost: number;
-  profileItems: OptimizedProfileItem[]; // Ahora usa OptimizedProfileItem
-  totalWasteInches: number; // Desperdicio total en pulgadas
-  wastePercentage: number; // Porcentaje de desperdicio estimado
-  optimizationNotes: string[];
-  cuttingSheetUrl?: string;
+  quoteId: string
+  date: Date
+  totalLinearFeet: number
+  totalCost: number
+  profileItems: OptimizedProfileItem[]
+  totalWasteInches: number
+  wastePercentage: number
+  optimizationNotes: string[]
+  cuttingSheetUrl?: string
+}
+
+function normalizeProductType(category: string): 'puerta' | 'ventana' | 'screen' | 'garage' | 'closet' {
+  const value = category.toLowerCase()
+  if (value.includes('screen') || value.includes('malla')) return 'screen'
+  if (value.includes('ventana')) return 'ventana'
+  if (value.includes('garaje')) return 'garage'
+  if (value.includes('closet')) return 'closet'
+  return 'puerta'
+}
+
+function glass(width: number, height: number, quantity = 1): ProfileItem {
+  const glassWidth = Math.max(width - 3, 1)
+  const glassHeight = Math.max(height - 4, 1)
+  return {
+    profileType: `Cristal / Vidrio ${glassWidth.toFixed(1)}\" x ${glassHeight.toFixed(1)}\"`,
+    profileSize: `${glassWidth.toFixed(1)}\" x ${glassHeight.toFixed(1)}\"`,
+    lengthInches: glassWidth * glassHeight,
+    quantity,
+    unitPrice: 0.08,
+    finish: 'claro',
+  }
 }
 
 /**
- * Calcula los perfiles necesarios basado en dimensiones
+ * Calcula materiales por dimensiones en pulgadas.
  */
-export function calculateProfilesNeeded(
-  width: number,
-  height: number,
-  productType: 'puerta' | 'ventana' | 'screen'
-): ProfileItem[] {
-  const profiles: ProfileItem[] = [];
+export function calculateProfilesNeeded(width: number, height: number, category: string): ProfileItem[] {
+  const w = Math.max(width || 0, 1)
+  const h = Math.max(height || 0, 1)
+  const type = normalizeProductType(category)
+  const perimeter = 2 * (w + h)
 
-  // Conversión a pulgadas si es necesario
-  const w = width; // Asumimos que ya está en pulgadas
-  const h = height;
-
-  if (productType === 'puerta') {
-    // Marcos laterales (2x)
-    profiles.push({
-      profileType: 'Marco Lateral',
-      profileSize: '1 x 1',
-      lengthInches: h,
-      quantity: 2,
-      unitPrice: 2.5,
-      finish: 'anodizado',
-    });
-
-    // Marco superior (1x)
-    profiles.push({
-      profileType: 'Marco Superior',
-      profileSize: '1 x 1',
-      lengthInches: w,
-      quantity: 1,
-      unitPrice: 2.5,
-      finish: 'anodizado',
-    });
-
-    // Marco inferior (1x)
-    profiles.push({
-      profileType: 'Marco Inferior',
-      profileSize: '1 x 1',
-      lengthInches: w,
-      quantity: 1,
-      unitPrice: 2.5,
-      finish: 'anodizado',
-    });
-
-    // Vareta central (1x)
-    profiles.push({
-      profileType: 'Vareta Central',
-      profileSize: '3/4 x 3/4',
-      lengthInches: h,
-      quantity: 1,
-      unitPrice: 1.8,
-      finish: 'anodizado',
-    });
-  } else if (productType === 'ventana') {
-    // Marcos (4x)
-    profiles.push({
-      profileType: 'Marco',
-      profileSize: '3/4 x 3/4',
-      lengthInches: w,
-      quantity: 2,
-      unitPrice: 1.8,
-      finish: 'anodizado',
-    });
-    profiles.push({
-      profileType: 'Marco',
-      profileSize: '3/4 x 3/4',
-      lengthInches: h,
-      quantity: 2,
-      unitPrice: 1.8,
-      finish: 'anodizado',
-    });
-
-    // Varetas (2x)
-    profiles.push({
-      profileType: 'Vareta Horizontal',
-      profileSize: '1/2 x 1/2',
-      lengthInches: w,
-      quantity: 2,
-      unitPrice: 1.2,
-      finish: 'anodizado',
-    });
-  } else if (productType === 'screen') {
-    // Marco exterior
-    profiles.push({
-      profileType: 'Marco Exterior',
-      profileSize: '1 x 1',
-      lengthInches: w,
-      quantity: 2,
-      unitPrice: 2.0,
-      finish: 'natural',
-    });
-    profiles.push({
-      profileType: 'Marco Exterior',
-      profileSize: '1 x 1',
-      lengthInches: h,
-      quantity: 2,
-      unitPrice: 2.0,
-      finish: 'natural',
-    });
-
-    // Malla
-    // Malla no es un perfil lineal, se calcula diferente.
-    // Por ahora, no la incluimos en la optimización de corte de perfiles.
-    // profiles.push({
-    //   profileType: 'Malla Fiberglass',
-    //   profileSize: 'Regular',
-    //   lengthInches: w * h,
-    //   quantity: 1,
-    //   unitPrice: 0.15,
-    //   finish: 'gris',
-    // });
+  if (type === 'screen') {
+    return [
+      { profileType: 'Marco Exterior Screen', profileSize: '1 x 1', lengthInches: h, quantity: 2, unitPrice: 2.1, finish: 'aluminio' },
+      { profileType: 'Marco Exterior Screen', profileSize: '1 x 1', lengthInches: w, quantity: 2, unitPrice: 2.1, finish: 'aluminio' },
+      { profileType: 'Intermedio Heavy', profileSize: '3/4 x 3/4', lengthInches: w, quantity: h > 60 ? 1 : 0, unitPrice: 1.75, finish: 'aluminio' },
+      { profileType: 'Malla Screen Fiberglass', profileSize: `${w.toFixed(1)}\" x ${h.toFixed(1)}\"`, lengthInches: w * h, quantity: 1, unitPrice: 0.035, finish: 'gris' },
+      { profileType: 'Felpa', profileSize: 'Regular', lengthInches: perimeter, quantity: 1, unitPrice: 0.18, finish: 'negra' },
+      { profileType: 'Varilla Roscada', profileSize: '1/8', lengthInches: h, quantity: 1, unitPrice: 0.22, finish: 'acero' },
+    ].filter((item) => item.quantity > 0)
   }
 
-  return profiles;
+  if (type === 'ventana') {
+    return [
+      { profileType: 'Marco Heavy', profileSize: '2 x 1', lengthInches: h, quantity: 2, unitPrice: 2.65, finish: 'aluminio' },
+      { profileType: 'Marco Heavy', profileSize: '2 x 1', lengthInches: w, quantity: 2, unitPrice: 2.65, finish: 'aluminio' },
+      { profileType: 'Adaptador Curvo', profileSize: 'Regular', lengthInches: w, quantity: 2, unitPrice: 1.85, finish: 'aluminio' },
+      { profileType: 'Intermedio Heavy', profileSize: '3/4 x 3/4', lengthInches: h, quantity: 1, unitPrice: 1.95, finish: 'aluminio' },
+      { profileType: 'Felpa', profileSize: 'Regular', lengthInches: perimeter, quantity: 1, unitPrice: 0.18, finish: 'negra' },
+      glass(w / 2, h, 2),
+    ]
+  }
+
+  if (type === 'garage') {
+    return [
+      { profileType: 'Marco Exterior Heavy', profileSize: '3 x 2', lengthInches: h, quantity: 2, unitPrice: 4.5, finish: 'aluminio' },
+      { profileType: 'Marco Exterior Heavy', profileSize: '3 x 2', lengthInches: w, quantity: 2, unitPrice: 4.5, finish: 'aluminio' },
+      { profileType: 'Intermedio Heavy', profileSize: '2 x 1', lengthInches: w, quantity: Math.max(2, Math.ceil(h / 24)), unitPrice: 2.75, finish: 'aluminio' },
+      { profileType: 'Bisagras y accesorios', profileSize: 'Kit', lengthInches: 1, quantity: 1, unitPrice: 65, finish: 'herrajes' },
+      { profileType: 'Tola / Panel', profileSize: `${w.toFixed(1)}\" x ${h.toFixed(1)}\"`, lengthInches: w * h, quantity: 1, unitPrice: 0.055, finish: 'blanco' },
+    ]
+  }
+
+  if (type === 'closet') {
+    return [
+      { profileType: 'Marco Closet', profileSize: '2 x 1', lengthInches: h, quantity: 2, unitPrice: 2.4, finish: 'aluminio' },
+      { profileType: 'Marco Closet', profileSize: '2 x 1', lengthInches: w, quantity: 2, unitPrice: 2.4, finish: 'aluminio' },
+      { profileType: 'Riel Superior', profileSize: 'Doble', lengthInches: w, quantity: 1, unitPrice: 3.25, finish: 'aluminio' },
+      { profileType: 'Riel Inferior', profileSize: 'Doble', lengthInches: w, quantity: 1, unitPrice: 3.25, finish: 'aluminio' },
+      { profileType: 'Tola / Panel', profileSize: `${Math.max(w / 2 - 1, 1).toFixed(1)}\" x ${h.toFixed(1)}\"`, lengthInches: (w / 2) * h, quantity: 2, unitPrice: 0.05, finish: 'blanco' },
+    ]
+  }
+
+  return [
+    { profileType: 'Marco Exterior Heavy', profileSize: '2 x 1', lengthInches: h, quantity: 2, unitPrice: 2.95, finish: 'aluminio' },
+    { profileType: 'Marco Exterior Heavy', profileSize: '2 x 1', lengthInches: w, quantity: 2, unitPrice: 2.95, finish: 'aluminio' },
+    { profileType: 'Adaptador Curvo', profileSize: 'Regular', lengthInches: h, quantity: 2, unitPrice: 1.95, finish: 'aluminio' },
+    { profileType: 'Intermedio Heavy', profileSize: '3/4 x 3/4', lengthInches: w, quantity: h > 54 ? 1 : 0, unitPrice: 1.85, finish: 'aluminio' },
+    { profileType: 'Felpa', profileSize: 'Regular', lengthInches: perimeter, quantity: 1, unitPrice: 0.18, finish: 'negra' },
+    { profileType: 'Varilla Roscada', profileSize: '1/8', lengthInches: h, quantity: 1, unitPrice: 0.22, finish: 'acero' },
+    glass(w, h, 1),
+  ].filter((item) => item.quantity > 0)
 }
 
-/**
- * Optimiza los perfiles para minimizar desperdicio
- */
 export function optimizeProfiles(profiles: ProfileItem[]): {
-  optimized: OptimizedProfileItem[];
-  totalWasteInches: number;
-  wastePercentage: number;
-  notes: string[];
+  optimized: OptimizedProfileItem[]
+  totalWasteInches: number
+  wastePercentage: number
+  notes: string[]
 } {
-  const STANDARD_STOCK_LENGTH_INCHES = 240; // 20 pies * 12 pulgadas/pie
-  const SAW_KERF_INCHES = 0.125; // 1/8 de pulgada por corte de sierra
+  const standardStockLengthInches = 240
+  const sawKerfInches = 0.125
+  const notes: string[] = []
+  let totalRequired = 0
+  let totalStockUsed = 0
+  let totalWaste = 0
 
-  const notes: string[] = [];
-  let totalOverallRequiredLength = 0; // Suma de todas las longitudes de corte solicitadas
-  let totalOverallStockUsedLength = 0; // Suma de todas las longitudes de stock utilizadas
-  let totalOverallWasteInches = 0; // Suma de todo el desperdicio
-  let totalOverallCost = 0; // Costo total de los perfiles
+  const grouped: Record<string, { profile: ProfileItem; cutLengths: number[] }> = {}
 
-  // 1. Agrupar perfiles por tipo, tamaño, color y acabado
-  const groupedProfiles: Record<string, { profile: ProfileItem; cutLengths: number[] }> = {};
-
-  profiles.forEach(p => {
-    const key = `${p.profileType}-${p.profileSize}-${p.color || ''}-${p.finish || ''}`;
-    if (!groupedProfiles[key]) {
-      groupedProfiles[key] = { profile: { ...p, quantity: 0 }, cutLengths: [] };
+  profiles.forEach((profile) => {
+    const key = `${profile.profileType}-${profile.profileSize}-${profile.color || ''}-${profile.finish || ''}-${profile.unitPrice}`
+    if (!grouped[key]) grouped[key] = { profile: { ...profile, quantity: 0 }, cutLengths: [] }
+    for (let i = 0; i < profile.quantity; i++) {
+      grouped[key].cutLengths.push(profile.lengthInches)
+      grouped[key].profile.quantity += 1
     }
-    for (let i = 0; i < p.quantity; i++) {
-      groupedProfiles[key].cutLengths.push(p.lengthInches);
-      groupedProfiles[key].profile.quantity++;
-    }
-    totalOverallRequiredLength += p.lengthInches * p.quantity;
-  });
+    totalRequired += profile.lengthInches * profile.quantity
+  })
 
-  const optimizedProfiles: OptimizedProfileItem[] = [];
+  const optimized: OptimizedProfileItem[] = []
 
-  for (const key in groupedProfiles) {
-    const { profile, cutLengths } = groupedProfiles[key];
-    const sortedCutLengths = [...cutLengths].sort((a, b) => b - a); // Ordenar de mayor a menor
+  Object.values(grouped).forEach(({ profile, cutLengths }) => {
+    const sorted = [...cutLengths].sort((a, b) => b - a)
+    let stockPiecesUsed = 0
+    let wasteForProfile = 0
 
-    let stockPiecesUsed = 0;
-    let currentStockRemaining = 0;
-    let currentProfileWasteInches = 0;
-    let currentProfileTotalPrice = 0;
-
-    // Implementación del algoritmo First Fit Decreasing (FFD)
-    while (sortedCutLengths.length > 0) {
-      stockPiecesUsed++;
-      currentStockRemaining = STANDARD_STOCK_LENGTH_INCHES;
-      notes.push(`Iniciando nueva barra de ${STANDARD_STOCK_LENGTH_INCHES}" para ${profile.profileType} ${profile.profileSize}`);
-
-      let i = 0;
-      while (i < sortedCutLengths.length) {
-        const cut = sortedCutLengths[i];
-        // Considerar el espacio del corte de sierra
-        if (cut + SAW_KERF_INCHES <= currentStockRemaining) {
-          currentStockRemaining -= (cut + SAW_KERF_INCHES);
-          currentProfileTotalPrice += (cut / 12) * profile.unitPrice; // Precio por pulgada lineal
-          notes.push(`  Cortando ${cut}" (restante: ${currentStockRemaining.toFixed(2)}")`);
-          sortedCutLengths.splice(i, 1); // Remover la pieza cortada
+    while (sorted.length > 0) {
+      stockPiecesUsed += 1
+      let remaining = standardStockLengthInches
+      let i = 0
+      while (i < sorted.length) {
+        const cut = sorted[i]
+        const required = cut > 1200 ? 0 : cut + sawKerfInches
+        if (cut > 1200 || required <= remaining) {
+          if (cut <= 1200) remaining -= required
+          sorted.splice(i, 1)
         } else {
-          i++; // Intentar con la siguiente pieza
+          i += 1
         }
       }
-      totalOverallStockUsedLength += STANDARD_STOCK_LENGTH_INCHES;
-      currentProfileWasteInches += currentStockRemaining; // El restante es desperdicio de esta barra
-      notes.push(`  Desperdicio en esta barra: ${currentStockRemaining.toFixed(2)}"`);
+      totalStockUsed += standardStockLengthInches
+      wasteForProfile += remaining
     }
 
-    optimizedProfiles.push({
+    const linearFeet = profile.lengthInches > 1200 ? 0 : (profile.lengthInches * profile.quantity) / 12
+    const areaLike = profile.lengthInches > 1200 ? profile.lengthInches * profile.quantity : 0
+    const totalPrice = profile.lengthInches > 1200 ? areaLike * profile.unitPrice : linearFeet * profile.unitPrice
+    totalWaste += wasteForProfile
+
+    optimized.push({
       ...profile,
-      totalPrice: currentProfileTotalPrice,
-      stockLengthUsed: stockPiecesUsed,
-      wasteInches: currentProfileWasteInches,
-    });
-    totalOverallWasteInches += currentProfileWasteInches;
-    totalOverallCost += currentProfileTotalPrice;
-  }
+      totalPrice,
+      stockLengthUsed: Math.max(stockPiecesUsed, 1),
+      wasteInches: wasteForProfile,
+    })
+  })
 
-  const finalTotalLinearFeet = totalOverallRequiredLength / 12;
-  const wastePercentage = totalOverallStockUsedLength > 0 ? (totalOverallWasteInches / totalOverallStockUsedLength) * 100 : 0;
+  const wastePercentage = totalStockUsed > 0 ? (totalWaste / totalStockUsed) * 100 : 0
+  const totalLinearFeet = totalRequired / 12
+  notes.push(`Material calculado para ${totalLinearFeet.toFixed(1)} pies lineales equivalentes.`)
+  notes.push('Longitud estándar usada: barras de 20 pies para perfilería.')
+  notes.push('La cristalería y tolas se calculan por medida neta con deducciones automáticas.')
+  notes.push('Verificar disponibilidad de color y acabado antes de cortar.')
 
-  notes.unshift(`Total de perfiles a cortar: ${totalOverallRequiredLength.toFixed(2)}"`);
-  notes.unshift(`Longitud estándar de stock: ${STANDARD_STOCK_LENGTH_INCHES}"`);
-  notes.unshift(`Ancho de corte de sierra (kerf): ${SAW_KERF_INCHES}"`);
-
-  return { optimized: optimizedProfiles, totalWasteInches: totalOverallWasteInches, wastePercentage, notes };
+  return { optimized, totalWasteInches: totalWaste, wastePercentage, notes }
 }
 
-/**
- * Genera el HTML para la Hoja de Compra visual
- */
 export function generateShoppingSheetHTML(sheet: ShoppingSheet): string {
-  const profileRows = sheet.profileItems
+  const rows = sheet.profileItems
     .map(
       (item) => `
-    <tr class="border-b hover:bg-gray-50">
-      <td class="px-4 py-3 font-semibold text-gray-900">${item.profileType}</td>
-      <td class="px-4 py-3 text-gray-700">${item.profileSize}</td>
-      <td class="px-4 py-3 text-right text-gray-700">${item.lengthInches.toFixed(2)}"</td>
-      <td class="px-4 py-3 text-center font-bold text-blue-600">${item.quantity}</td>
-      <td class="px-4 py-3 text-right text-gray-700">$${item.unitPrice.toFixed(2)}</td>
-      <td class="px-4 py-3 text-right font-bold text-green-600">$${item.totalPrice.toFixed(2)}</td>
-      <td class="px-4 py-3 text-center text-gray-700">${item.stockLengthUsed}</td>
-      <td class="px-4 py-3 text-right text-red-600">${item.wasteInches.toFixed(2)}"</td>
-    </tr>
-  `
+        <tr>
+          <td>${item.profileType}</td>
+          <td>${item.profileSize}</td>
+          <td style="text-align:right">${(item.lengthInches / 12).toFixed(2)}'</td>
+          <td style="text-align:center">${item.quantity}</td>
+          <td style="text-align:right">${formatUSD(item.unitPrice)}</td>
+          <td style="text-align:right"><strong>${formatUSD(item.totalPrice)}</strong></td>
+        </tr>`
     )
-    .join('');
+    .join('')
 
-  return `
-<!DOCTYPE html>
-<html lang="es">
+  return `<!DOCTYPE html>
+<html lang="es-PR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hoja de Compra - CotizaYa</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
-    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; }
-    .header h1 { font-size: 28px; margin-bottom: 10px; }
-    .header p { opacity: 0.9; }
-    .content { padding: 30px; }
-    .section { margin-bottom: 30px; }
-    .section h2 { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+    body { font-family: Arial, sans-serif; background: #f8fafc; color: #111827; padding: 24px; }
+    .container { max-width: 960px; margin: 0 auto; background: white; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
+    .header { background: #0f172a; color: white; padding: 28px; }
+    .header h1 { margin: 0; font-size: 26px; }
+    .header p { color: #cbd5e1; margin: 8px 0 0; }
+    .content { padding: 28px; }
     table { width: 100%; border-collapse: collapse; }
-    th { background: #f0f0f0; padding: 12px; text-align: left; font-weight: 600; color: #333; }
-    td { padding: 12px; }
-    .total-row { background: #f9f9f9; font-weight: bold; font-size: 16px; }
-    .waste-info { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
-    .notes { background: #e7f3ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 4px; }
-    .notes ul { margin-left: 20px; }
-    .notes li { margin: 8px 0; }
-    .footer { background: #f5f5f5; padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    th { background: #f1f5f9; text-align: left; padding: 10px; font-size: 12px; text-transform: uppercase; color: #475569; }
+    td { border-top: 1px solid #e5e7eb; padding: 10px; font-size: 13px; }
+    .total { margin-top: 20px; text-align: right; font-size: 22px; font-weight: 800; color: #f97316; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>📋 Hoja de Compra de Materiales</h1>
-      <p>CotizaYa Pro - ${new Date(sheet.date).toLocaleDateString('es-ES')}</p>
+      <h1>Hoja de Compra de Materiales</h1>
+      <p>CotizaYa Pro · ${new Date(sheet.date).toLocaleDateString('es-PR')}</p>
     </div>
-    
     <div class="content">
-      <div class="section">
-        <div class="waste-info">
-          <strong>⚠️ Desperdicio Estimado:</strong> ${sheet.wastePercentage.toFixed(1)}%
-          <br><small>Se recomienda comprar con margen adicional para cortes y ajustes</small>
-        </div>
-        
-        <table>
-          <thead>
-            <tr style="background: #667eea; color: white;">
-              <th>Perfil</th>
-              <th>Tamaño</th>
-              <th>Longitud</th>
-              <th>Cantidad</th>
-              <th>Precio Unit.</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${profileRows}
-            <tr class="total-row" style="background: #667eea; color: white;">
-              <td colspan="5" style="text-align: right;">TOTAL:</td>
-              <td style="text-align: right;">$${sheet.totalCost.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="section notes">
-        <h3 style="margin-bottom: 10px;">📝 Notas de Optimización:</h3>
-        <ul>
-          ${sheet.optimizationNotes.map((note) => `<li>${note}</li>`).join('')}
-        </ul>
-      </div>
-    </div>
-    
-    <div class="footer">
-      <p>Documento generado por CotizaYa Pro - ${new Date().toLocaleTimeString('es-ES')}</p>
+      <table>
+        <thead><tr><th>Material</th><th>Medida</th><th>Pie lineal</th><th>Qty</th><th>Precio</th><th>Total</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="total">Total materiales: ${formatUSD(sheet.totalCost)}</div>
     </div>
   </div>
 </body>
-</html>
-  `;
+</html>`
 }

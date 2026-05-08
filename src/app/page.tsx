@@ -29,7 +29,10 @@ export default function HomePage() {
             <span className="font-black text-lg text-gray-900">CotizaYa</span>
           </div>
           <nav className="flex items-center gap-8">
-            <Link href="#features" className="text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">
+            <Link href="/catalogo" className="hidden sm:inline text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">
+              Catálogo
+            </Link>
+            <Link href="#features" className="hidden md:inline text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">
               Características
             </Link>
             <Link href="#pricing" className="text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">
@@ -74,10 +77,10 @@ export default function HomePage() {
             <ArrowRight className="w-5 h-5" />
           </Link>
           <Link
-            href="#pricing"
+            href="/catalogo"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-gray-300 text-gray-900 font-bold rounded-xl hover:border-gray-400 transition-all"
           >
-            Ver Planes
+            Ver Catálogo
           </Link>
         </div>
         <p className="text-sm text-gray-500 font-medium">Sin tarjeta de crédito requerida</p>
