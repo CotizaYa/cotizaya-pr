@@ -1,6 +1,33 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { NewSupplierForm } from "./NewSupplierForm";
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { 
+  Plus, 
+  Search, 
+  Truck, 
+  Phone, 
+  Mail, 
+  MapPin, 
+  ExternalLink,
+  Loader2,
+  MoreVertical,
+  Trash2,
+  Edit2,
+  MessageCircle,
+  Info
+} from 'lucide-react'
+
+interface Suplidor {
+  id: string
+  name: string
+  contact_person: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  category: string | null
+  whatsapp?: string | null
+}
 
 const CAT_LABEL: Record<string, string> = {
   aluminio: "Aluminio / Perfiles",
@@ -11,121 +38,312 @@ const CAT_LABEL: Record<string, string> = {
   pintura: "Pintura / Selladores",
   construccion: "Materiales de Construcción",
   miscelanea: "Miscelánea",
-};
-
-const CAT_ICON: Record<string, string> = {
-  aluminio: "", vidrio: "", screen: "", herrajes: "",
-  tornilleria: "", pintura: "", construccion: "", miscelanea: "",
-};
+}
 
 const CAT_COLOR: Record<string, string> = {
-  aluminio: "#dbeafe", vidrio: "#e0f2fe", screen: "#dcfce7",
-  herrajes: "#fef9c3", tornilleria: "#f3e8ff", pintura: "#fce7f3",
-  construccion: "#fff7ed", miscelanea: "#f5f5f5",
-};
+  aluminio: "bg-blue-50 text-blue-700",
+  vidrio: "bg-sky-50 text-sky-700",
+  screen: "bg-green-50 text-green-700",
+  herrajes: "bg-yellow-50 text-yellow-700",
+  tornilleria: "bg-purple-50 text-purple-700",
+  pintura: "bg-pink-50 text-pink-700",
+  construccion: "bg-orange-50 text-orange-700",
+  miscelanea: "bg-gray-50 text-gray-700",
+}
 
-export default async function SuplidoresPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+export default function SuplidoresPage() {
+  const supabase = createClient()
+  const [suplidores, setSuplidores] = useState<Suplidor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingSuplidor, setEditingSuplidor] = useState<Suplidor | null>(null)
 
-  const { data: suppliers } = await supabase
-    .from("suppliers")
-    .select("*")
-    .eq("owner_id", user.id)
-    .order("category")
-    .order("name");
+  const [formData, setFormData] = useState({
+    name: '',
+    contact_person: '',
+    phone: '',
+    email: '',
+    address: '',
+    category: 'aluminio',
+    whatsapp: ''
+  })
 
-  const all = suppliers ?? [];
+  useEffect(() => {
+    loadSuplidores()
+  }, [])
 
-  // Group by category
-  const grouped: Record<string, typeof all> = {};
-  for (const s of all) {
-    if (!grouped[s.category]) grouped[s.category] = [];
-    grouped[s.category].push(s);
+  const loadSuplidores = async () => {
+    try {
+      setLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('name')
+
+      if (error) throw error
+      setSuplidores(data || [])
+    } catch (err) {
+      console.error('Error cargando suplidores:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const data = { ...formData, owner_id: user.id }
+
+      if (editingSuplidor) {
+        const { error } = await supabase
+          .from('suppliers')
+          .update(data)
+          .eq('id', editingSuplidor.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('suppliers')
+          .insert([data])
+        if (error) throw error
+      }
+
+      setIsModalOpen(false)
+      setEditingSuplidor(null)
+      setFormData({
+        name: '',
+        contact_person: '',
+        phone: '',
+        email: '',
+        address: '',
+        category: 'aluminio',
+        whatsapp: ''
+      })
+      loadSuplidores()
+    } catch (err) {
+      console.error('Error guardando suplidor:', err)
+      alert('Error al guardar el suplidor')
+    }
+  }
+
+  const filtered = suplidores.filter(s => 
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.category?.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
-    <div style={{ padding: "24px", maxWidth: "900px", margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#171717" }}> Mis Suplidores</h1>
-          <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#737373" }}>
-            {all.length} suplidores guardados · El Asistente IA los usará para consultar precios en tiempo real
-          </p>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900">Mis Suplidores</h1>
+          <p className="text-gray-600 font-medium mt-1">Directorio de proveedores para tu taller</p>
+        </div>
+        <button 
+          onClick={() => {
+            setEditingSuplidor(null)
+            setIsModalOpen(true)
+          }}
+          className="flex items-center justify-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg shadow-orange-200"
+        >
+          <Plus className="w-5 h-5" />
+          Nuevo Suplidor
+        </button>
+      </div>
+
+      {/* Info Banner */}
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 rounded-2xl p-4 flex gap-4 items-start shadow-sm">
+        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+          <MessageCircle className="w-5 h-5 text-orange-600" />
+        </div>
+        <div>
+          <p className="text-sm font-black text-orange-900">Próximamente: Consulta automática de precios</p>
+          <p className="text-xs text-orange-800 mt-1">El Asistente IA podrá enviar WhatsApps automáticos a tus suplidores para traerte precios actualizados en segundos.</p>
         </div>
       </div>
 
-      {/* Info banner */}
-      <div style={{ background: "linear-gradient(135deg, #fff7ed, #fef3c7)", border: "1px solid #fed7aa", borderRadius: "14px", padding: "14px 18px", marginBottom: "20px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
-        <span style={{ fontSize: "24px" }}></span>
-        <div>
-          <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "#c2410c" }}>Próximamente: Consulta automática de precios</p>
-          <p style={{ margin: "3px 0 0", fontSize: "12px", color: "#92400e" }}>
-            Cuando el Asistente IA necesite precios actualizados, enviará un WhatsApp automático a tus suplidores y traerá la respuesta de vuelta en segundos.
-          </p>
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input 
+            type="text"
+            placeholder="Buscar suplidor por nombre o categoría..."
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
 
-      <NewSupplierForm />
-
-      {all.length === 0 ? (
-        <div style={{ background: "white", border: "1px solid #e5e5e5", borderRadius: "16px", padding: "48px", textAlign: "center", marginTop: "16px" }}>
-          <p style={{ fontSize: "48px", margin: "0 0 12px" }}></p>
-          <p style={{ fontSize: "15px", fontWeight: 600, color: "#171717", margin: "0 0 6px" }}>Sin suplidores aún</p>
-          <p style={{ fontSize: "13px", color: "#737373" }}>Agrega tus suplidores de confianza para que el asistente pueda consultarles precios</p>
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-12 h-12 text-orange-600 animate-spin" />
+        </div>
+      ) : suplidores.length === 0 ? (
+        <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center">
+          <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Truck className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900">No hay suplidores aún</h3>
+          <p className="text-gray-500 mt-1">Agrega tus proveedores frecuentes para facilitar tus pedidos.</p>
         </div>
       ) : (
-        <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "16px" }}>
-          {Object.entries(grouped).map(([cat, items]) => (
-            <div key={cat} style={{ background: "white", border: "1px solid #e5e5e5", borderRadius: "14px", overflow: "hidden" }}>
-              <div style={{ background: CAT_COLOR[cat] ?? "#fafafa", padding: "10px 18px", borderBottom: "1px solid #f5f5f5", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "16px" }}>{CAT_ICON[cat] ?? ""}</span>
-                <span style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#404040" }}>
-                  {CAT_LABEL[cat] ?? cat}
-                </span>
-                <span style={{ marginLeft: "auto", fontSize: "11px", color: "#737373" }}>{items.length} suplidor{items.length !== 1 ? "es" : ""}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map(s => (
+            <div key={s.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group">
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center font-black text-orange-600 text-lg">
+                  {s.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => {
+                    setEditingSuplidor(s)
+                    setFormData({
+                      name: s.name,
+                      contact_person: s.contact_person || '',
+                      phone: s.phone || '',
+                      email: s.email || '',
+                      address: s.address || '',
+                      category: s.category || 'aluminio',
+                      whatsapp: s.whatsapp || ''
+                    })
+                    setIsModalOpen(true)
+                  }} className="p-2 text-gray-400 hover:text-orange-600 bg-gray-50 rounded-lg">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                {items.map((s: any) => (
-                  <li key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px", borderBottom: "1px solid #fafafa" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <div style={{ width: "38px", height: "38px", background: "#fff7ed", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: 800, color: "#f97316" }}>
-                        {s.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#171717" }}>{s.name}</p>
-                        <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "2px" }}>
-                          {s.phone && (
-                            <a href={`tel:${s.phone}`} style={{ fontSize: "12px", color: "#737373", textDecoration: "none" }}>
-                               {s.phone}
-                            </a>
-                          )}
-                          {s.whatsapp && (
-                            <a href={`https://wa.me/1${s.whatsapp.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: "12px", color: "#16a34a", textDecoration: "none", fontWeight: 600 }}>
-                               WhatsApp
-                            </a>
-                          )}
-                          {s.email && <span style={{ fontSize: "12px", color: "#737373" }}> {s.email}</span>}
-                        </div>
-                        {s.notes && <p style={{ margin: "3px 0 0", fontSize: "11px", color: "#a3a3a3" }}>{s.notes}</p>}
-                      </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${CAT_COLOR[s.category || 'miscelanea']}`}>
+                    {CAT_LABEL[s.category || 'miscelanea']}
+                  </span>
+                  <h3 className="text-lg font-black text-gray-900 mt-1 truncate">{s.name}</h3>
+                  <p className="text-xs text-gray-500 font-bold">{s.contact_person || 'Sin contacto asignado'}</p>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-gray-50">
+                  {s.phone && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      {s.phone}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      {s.whatsapp && (
-                        <span style={{ background: "#dcfce7", color: "#15803d", borderRadius: "999px", padding: "2px 8px", fontSize: "10px", fontWeight: 700 }}>
-                          WA Listo
-                        </span>
-                      )}
+                  )}
+                  {s.whatsapp && (
+                    <div className="flex items-center gap-2 text-sm text-green-600 font-bold">
+                      <MessageCircle className="w-4 h-4 text-green-500" />
+                      WhatsApp Listo
                     </div>
-                  </li>
-                ))}
-              </ul>
+                  )}
+                  {s.email && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Mail className="w-4 h-4 text-gray-400" />
+                      <span className="truncate">{s.email}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="text-xl font-black text-gray-900">
+                {editingSuplidor ? 'Editar Suplidor' : 'Nuevo Suplidor'}
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <Trash2 className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase">Nombre de la Empresa</label>
+                <input 
+                  required
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-orange-500"
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Persona de Contacto</label>
+                  <input 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-orange-500"
+                    value={formData.contact_person}
+                    onChange={e => setFormData({...formData, contact_person: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Categoría</label>
+                  <select 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-orange-500"
+                    value={formData.category}
+                    onChange={e => setFormData({...formData, category: e.target.value})}
+                  >
+                    {Object.entries(CAT_LABEL).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Teléfono</label>
+                  <input 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-orange-500"
+                    value={formData.phone}
+                    onChange={e => setFormData({...formData, phone: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">WhatsApp</label>
+                  <input 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-orange-500"
+                    value={formData.whatsapp}
+                    onChange={e => setFormData({...formData, whatsapp: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
+                <input 
+                  type="email"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-orange-500"
+                  value={formData.email}
+                  onChange={e => setFormData({...formData, email: e.target.value})}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase">Dirección</label>
+                <input 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-orange-500"
+                  value={formData.address}
+                  onChange={e => setFormData({...formData, address: e.target.value})}
+                />
+              </div>
+              <button 
+                type="submit"
+                className="w-full bg-orange-600 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-orange-200 hover:bg-orange-700 transition-all mt-4"
+              >
+                {editingSuplidor ? 'Guardar Cambios' : 'Agregar Suplidor'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
 }

@@ -23,6 +23,7 @@ import {
   Plus,
   Loader2,
   Grid3x3,
+  Package,
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -31,6 +32,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/dashboard', label: 'Inicio', icon: Home, exact: true },
       { href: '/dashboard/catalogo', label: 'Catálogo', icon: Grid3x3 },
+      { href: '/dashboard/mis-productos', label: 'Mis Productos', icon: Package },
       { href: '/dashboard/cotizaciones', label: 'Cotizaciones', icon: FileText },
       { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
     ],

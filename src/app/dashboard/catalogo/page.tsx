@@ -133,12 +133,44 @@ export default function CatalogoDashboardPage() {
     ? products.filter(p => p.category === selectedCategory)
     : []
 
+  if (!loading && products.length === 0) {
+    return (
+      <div className="p-4 md:p-8 max-w-4xl mx-auto text-center space-y-8">
+        <div className="bg-white border-2 border-dashed border-gray-200 rounded-[40px] p-12 md:p-20">
+          <div className="w-20 h-20 bg-orange-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <Grid3x3 className="w-10 h-10 text-orange-600" />
+          </div>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900">Tu catálogo está vacío</h2>
+          <p className="text-gray-600 font-medium mt-4 max-w-md mx-auto">
+            Para empezar a cotizar, primero debes agregar tus productos y modelos en la sección de Inventario.
+          </p>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-10">
+            <Link 
+              href="/dashboard/mis-productos"
+              className="w-full md:w-auto px-8 py-4 bg-orange-600 text-white font-black rounded-2xl hover:bg-orange-700 transition-all shadow-lg shadow-orange-200"
+            >
+              Configurar Mis Productos
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-black text-gray-900">Catálogo de Productos</h1>
-        <p className="text-gray-600 font-medium mt-1">{products.length} productos disponibles</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900">Catálogo de Productos</h1>
+          <p className="text-gray-600 font-medium mt-1">{products.length} productos disponibles</p>
+        </div>
+        <Link 
+          href="/dashboard/mis-productos"
+          className="flex items-center justify-center gap-2 bg-white border border-gray-200 px-6 py-3 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-sm"
+        >
+          Gestionar Inventario
+        </Link>
       </div>
 
       {/* Categories */}
