@@ -3,54 +3,37 @@ import { redirect } from "next/navigation";
 
 const PLANS = [
   {
-    id: "basic",
-    name: "Básico",
-    price: 0,
-    description: "Perfecto para comenzar",
+    id: "starter",
+    name: "Starter",
+    price: 15,
+    description: "Para contratistas independientes",
     features: [
       "Cotizador ilimitado",
+      "Catálogo de 63+ modelos",
+      "Share link profesional",
       "Dashboard con estadísticas",
-      "Catálogo de productos",
       "Calendario de instalaciones",
       "Soporte por email",
     ],
-    cta: "Actual",
+    cta: "Suscribirse",
     highlighted: false,
   },
   {
     id: "pro",
     name: "Pro",
-    price: 29,
-    description: "Para negocios en crecimiento",
+    price: 25,
+    description: "Para talleres en crecimiento",
     features: [
-      "Todo lo de Básico +",
-      " Chatbot de seguimiento",
-      "Cotizaciones mensuales automáticas",
-      "Integración WhatsApp",
-      "Hasta 50 clientes activos",
+      "Todo lo de Starter +",
+      "Asistente IA incluido",
+      "Factura con logo del negocio",
+      "Mis Precios personalizados",
+      "Hojas de corte automáticas",
       "Reportes avanzados",
       "Soporte prioritario",
     ],
     cta: "Suscribirse",
     highlighted: true,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 99,
-    description: "Solución completa para grandes equipos",
-    features: [
-      "Todo lo de Pro +",
-      "Chatbot ilimitado",
-      "Clientes ilimitados",
-      "API REST completa",
-      "Webhooks personalizados",
-      "Integraciones avanzadas",
-      "Soporte 24/7 dedicado",
-      "Consultoría estratégica",
-    ],
-    cta: "Contactar",
-    highlighted: false,
   },
 ];
 
@@ -83,7 +66,7 @@ export default async function PlanesPage() {
 
       {/* Plans Grid */}
       <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {PLANS.map((plan) => {
             const isCurrentPlan = currentPlan === plan.id;
 
