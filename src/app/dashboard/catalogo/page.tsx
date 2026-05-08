@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronRight, Grid3x3, Loader2 } from 'lucide-react'
+import { ChevronRight, Grid3x3, Loader2, Door, Window, Wind } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
-import Image from 'next/image'
 
 interface Product {
   id: string
@@ -231,33 +230,21 @@ export default function CatalogoDashboardPage() {
                     className="bg-white border border-gray-200 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg transition-all group"
                   >
                     <div className="mb-4">
-                      <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-3 relative overflow-hidden">
+                      <div className="w-full h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-3">
                         {(() => {
-                          const getImageForCategory = (category: string) => {
-                            switch (category?.toLowerCase()) {
-                              case 'puerta':
-                              case 'garaje':
-                                return '/models/door-generic.png';
-                              case 'ventana':
-                                return '/models/window-generic.png';
-                              case 'screen':
-                              case 'screen_ac':
-                                return '/models/screen-generic.png';
-                              default:
-                                return null;
-                            }
-                          };
-                          const imagePath = getImageForCategory(product.category);
-                          return imagePath ? (
-                            <Image
-                              src={imagePath}
-                              alt={product.name}
-                              fill
-                              className="object-contain p-2"
-                            />
-                          ) : (
-                            <Grid3x3 className="w-12 h-12 text-gray-400" />
-                          );
+                          const category = product.category?.toLowerCase();
+                          switch (category) {
+                            case 'puerta':
+                            case 'garaje':
+                              return <Door className="w-16 h-16 text-gray-600" strokeWidth={1.5} />;
+                            case 'ventana':
+                              return <Window className="w-16 h-16 text-gray-600" strokeWidth={1.5} />;
+                            case 'screen':
+                            case 'screen_ac':
+                              return <Wind className="w-16 h-16 text-gray-600" strokeWidth={1.5} />;
+                            default:
+                              return <Grid3x3 className="w-12 h-12 text-gray-400" />;
+                          }
                         })()}
                       </div>
                     </div>
