@@ -87,7 +87,18 @@ export default function SuplidoresPage() {
         .order('category').order('name')
 
       if (error) throw error
-      setSuplidores(data || [])
+
+      // If empty, try fetching only globals explicitly as fallback
+      if (!data || data.length === 0) {
+        const { data: globals } = await supabase
+          .from('suppliers')
+          .select('*')
+          .eq('is_global', true)
+          .order('category').order('name')
+        setSuplidores(globals || [])
+      } else {
+        setSuplidores(data)
+      }
     } catch (err: any) {
       console.error('Error cargando suplidores:', err)
       const message = err?.message || ''
@@ -192,6 +203,13 @@ export default function SuplidoresPage() {
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="w-12 h-12 text-orange-600 animate-spin" />
+        </div>
+      ) : filtered.length === 0 && search.trim() ? (
+        <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center">
+          <p className="text-gray-400 font-medium">No se encontraron suplidores con "{search}"</p>
+          <button onClick={() => setSearch('')} className="mt-3 text-sm text-orange-600 font-bold hover:underline">
+            Ver todos
+          </button>
         </div>
       ) : suplidores.length === 0 ? (
         <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center">

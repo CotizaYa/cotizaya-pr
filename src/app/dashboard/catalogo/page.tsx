@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, ChevronRight, DoorOpen, Wind, Layers, Grid3x3, Warehouse, Wrench, Square } from 'lucide-react'
+import { Loader2, ChevronRight, ChevronLeft, DoorOpen, Wind, Layers, Grid3x3, Warehouse, Wrench, Square } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
 import { ProductVisual } from '@/components/product/ProductVisual'
 
@@ -50,7 +50,6 @@ export default function CatalogoDashboardPage() {
           .from('products')
           .select('*')
           .eq('is_active', true)
-          .or(`owner_id.is.null,owner_id.eq.${user.id}`)
           .order('category').order('code')
 
         if (pe) { setError('Error al cargar catálogo'); return }
@@ -99,9 +98,16 @@ export default function CatalogoDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-6">
-        <h1 className="text-2xl md:text-3xl font-black text-gray-900">Catálogo</h1>
-        <p className="text-gray-500 text-sm mt-1">{products.length} productos disponibles</p>
+      <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-4">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div>
+            <h1 className="text-xl md:text-2xl font-black text-gray-900">Catálogo</h1>
+            <p className="text-gray-400 text-xs mt-0.5">{products.length} modelos disponibles</p>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row">
