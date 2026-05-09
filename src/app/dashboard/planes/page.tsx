@@ -5,6 +5,8 @@ const PLAN_WHATSAPP: Record<string, string> = {
   starter: encodeURIComponent('Hola, quiero suscribirme al plan CotizaYa Starter por $15/mes. ¿Cómo procedo?'),
   pro:     encodeURIComponent('Hola, quiero suscribirme al plan CotizaYa Pro por $25/mes. ¿Cómo procedo?'),
 }
+
+const PLANS = [
   {
     id: "starter",
     name: "Starter",
