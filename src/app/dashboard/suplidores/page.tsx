@@ -84,8 +84,7 @@ export default function SuplidoresPage() {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('owner_id', user.id)
-        .order('name')
+        .order('category').order('name')
 
       if (error) throw error
       setSuplidores(data || [])

@@ -66,10 +66,10 @@ export default async function CotizacionPublicaPage({ params }: PageProps) {
               {biz?.logo_url ? (
                 <img src={biz.logo_url} alt={biz.business_name} className="h-16 w-auto object-contain" />
               ) : (
-                <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-black text-2xl">
-                    {(biz?.business_name ?? 'C')[0].toUpperCase()}
-                  </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="text-white font-black text-lg">{(biz?.business_name ?? 'C')[0].toUpperCase()}</span>
+                  </div>
                 </div>
               )}
               <div>
@@ -173,19 +173,20 @@ export default async function CotizacionPublicaPage({ params }: PageProps) {
               <span className="font-bold">SUBTOTAL</span>
               <span className="tabular-nums font-bold">{fmt(subtotal)}</span>
             </div>
-            <div className="flex justify-between text-sm border-t border-dashed border-orange-200 pt-2">
-              <span className="font-black text-orange-600">DEPÓSITO</span>
-              <span className="tabular-nums font-black text-orange-600">{fmt(deposito)}</span>
+            <div className="flex justify-between text-sm text-gray-600 border-t border-gray-100 pt-2">
+              <span className="font-bold">TAX</span>
+              <span className="tabular-nums">$ 0.00</span>
             </div>
-            <div className="flex justify-between text-sm border-t border-dashed border-orange-200 pt-2">
-              <span className="font-black text-orange-600">BALANCE TOTAL</span>
-              <span className="tabular-nums font-black text-orange-600">{fmt(balance)}</span>
+            <div className="flex justify-between text-sm font-bold border-t border-gray-300 pt-2">
+              <span>TOTAL</span>
+              <span className="tabular-nums">{fmt(total)}</span>
             </div>
-            {/* Grand total */}
-            <div className="flex justify-between items-baseline bg-gray-900 rounded-xl px-4 py-3 mt-3">
-              <span className="text-white font-black text-base">TOTAL</span>
-              <span className="text-orange-400 font-black text-3xl tabular-nums">{fmt(total)}</span>
-            </div>
+          </div>
+          {/* Deposit info — left aligned like ScreenPRO */}
+          <div className="mt-4 pt-3 border-t border-dashed border-orange-200 text-sm space-y-1">
+            <p className="text-orange-600 font-bold">Deposit: 50%= {fmt(deposito)}</p>
+            <p className="text-gray-500">Date: ___________________</p>
+            <p className="text-gray-500">PAYMENT METHOD: CASH / ATH Móvil</p>
           </div>
         </div>
 

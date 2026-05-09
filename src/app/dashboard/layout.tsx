@@ -116,13 +116,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Logo */}
         <div className="px-6 py-6 border-b border-gray-50">
           <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
-              <span className="text-white font-bold text-lg">C</span>
-            </div>
-            <div>
-              <p className="font-bold text-gray-900 text-base leading-tight">CotizaYa</p>
-              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Puerto Rico</p>
-            </div>
+            <img 
+              src="/logo-cotizaya.png" 
+              alt="CotizaYa PR" 
+              className="h-9 w-auto object-contain"
+            />
           </Link>
         </div>
 
@@ -184,10 +182,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Mobile Header */}
         <header className="md:hidden sticky top-0 z-30 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 shadow-sm">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
-            <span className="font-bold text-gray-900">CotizaYa</span>
+            <img src="/logo-cotizaya.png" alt="CotizaYa PR" className="h-7 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-3">
             <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
