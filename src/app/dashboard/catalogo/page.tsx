@@ -112,7 +112,7 @@ export default function CatalogoDashboardPage() {
 
       {/* ── MOBILE: chips horizontales arriba ── */}
       <div className="md:hidden bg-white border-b border-gray-100">
-        <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: 'none' }}>
           {[...mainCats, ...otherCats].map(cat => {
             const m = CATEGORY_META[cat]
             const active = selectedCategory === cat
