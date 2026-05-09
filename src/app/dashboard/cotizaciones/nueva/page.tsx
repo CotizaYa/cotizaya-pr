@@ -315,7 +315,7 @@ function NuevaCotizacionContent() {
       </div>
 
       {quoteItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-xl z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-20 md:pb-4 shadow-xl z-20">
           <div className="max-w-lg mx-auto">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -421,7 +421,7 @@ function NuevaCotizacionContent() {
           )}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-20">
+        <div className="fixed bottom-0 left-0 right-0 p-4 pb-20 md:pb-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-20">
           <div className="max-w-lg mx-auto">
             <button onClick={addToQuote}
               disabled={showM ? (!width || !height || lineTotal === 0) : lineTotal === 0}
