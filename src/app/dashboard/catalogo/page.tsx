@@ -121,12 +121,10 @@ export default function CatalogoDashboardPage() {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold transition-all shrink-0 ${
-                  active
-                    ? 'bg-orange-500 text-white shadow-md shadow-orange-200'
-                    : 'bg-gray-100 text-gray-600'
+                  active ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 text-gray-600'
                 }`}
               >
-                <span className="w-4 h-4">{m?.icon}</span>
+                <span className="w-4 h-4 shrink-0">{m?.icon}</span>
                 {m?.label ?? cat}
               </button>
             )
@@ -149,8 +147,8 @@ export default function CatalogoDashboardPage() {
             </div>
           </>
         ) : (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-sm">Selecciona una categoría arriba</p>
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-400">Selecciona una categoría arriba</p>
           </div>
         )}
       </div>
@@ -166,13 +164,8 @@ export default function CatalogoDashboardPage() {
                 const count = products.filter(p => p.category === cat).length
                 const active = selectedCategory === cat
                 return (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all text-left ${
-                      active ? 'bg-orange-50 border-l-4 border-orange-500' : 'hover:bg-gray-50 border-l-4 border-transparent'
-                    }`}
-                  >
+                  <button key={cat} onClick={() => setSelectedCategory(cat)}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all text-left ${active ? 'bg-orange-50 border-l-4 border-orange-500' : 'hover:bg-gray-50 border-l-4 border-transparent'}`}>
                     <span className={active ? 'text-orange-600' : 'text-gray-400'}>{m?.icon ?? <Grid3x3 className="w-6 h-6" />}</span>
                     <div className="flex-1 min-w-0">
                       <p className={`font-bold text-sm truncate ${active ? 'text-orange-700' : 'text-gray-700'}`}>{m?.label ?? cat}</p>
@@ -192,13 +185,8 @@ export default function CatalogoDashboardPage() {
                 const count = products.filter(p => p.category === cat).length
                 const active = selectedCategory === cat
                 return (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all text-left ${
-                      active ? 'bg-orange-50 border-l-4 border-orange-500' : 'hover:bg-gray-50 border-l-4 border-transparent'
-                    }`}
-                  >
+                  <button key={cat} onClick={() => setSelectedCategory(cat)}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all text-left ${active ? 'bg-orange-50 border-l-4 border-orange-500' : 'hover:bg-gray-50 border-l-4 border-transparent'}`}>
                     <span className={active ? 'text-orange-600' : 'text-gray-400'}>{m?.icon ?? <Grid3x3 className="w-6 h-6" />}</span>
                     <div className="flex-1 min-w-0">
                       <p className={`font-bold text-sm truncate ${active ? 'text-orange-700' : 'text-gray-700'}`}>{m?.label ?? cat}</p>
@@ -211,13 +199,12 @@ export default function CatalogoDashboardPage() {
             </div>
           )}
         </aside>
-
         <main className="flex-1 p-8 space-y-8">
           {selectedCategory && filteredProducts.length > 0 && (
             <>
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-black text-gray-900">{meta?.label ?? selectedCategory}</h2>
-                <span className="text-sm text-gray-400 font-medium">{filteredProducts.length} modelos</span>
+                <span className="text-sm text-gray-400">{filteredProducts.length} modelos</span>
               </div>
               <section>
                 <div className="flex items-center gap-3 mb-4">
@@ -251,158 +238,31 @@ export default function CatalogoDashboardPage() {
     </div>
   )
 }
-          {mainCats.length > 0 && (
-            <div className="p-4">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3 px-2">Productos</p>
-              {mainCats.map(cat => {
-                const m = CATEGORY_META[cat]
-                const count = products.filter(p => p.category === cat).length
-                const active = selectedCategory === cat
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all text-left ${
-                      active
-                        ? 'bg-orange-50 border-l-4 border-orange-500'
-                        : 'hover:bg-gray-50 border-l-4 border-transparent'
-                    }`}
-                  >
-                    <span className={active ? 'text-orange-600' : 'text-gray-400'}>
-                      {m?.icon ?? <Grid3x3 className="w-6 h-6" />}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-bold text-sm truncate ${active ? 'text-orange-700' : 'text-gray-700'}`}>
-                        {m?.label ?? cat}
-                      </p>
-                      <p className="text-xs text-gray-400">{count} modelos</p>
-                    </div>
-                    {active && <ChevronRight className="w-4 h-4 text-orange-500 shrink-0" />}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
-          {otherCats.length > 0 && (
-            <div className="p-4 border-t border-gray-100">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3 px-2">Materiales</p>
-              {otherCats.map(cat => {
-                const m = CATEGORY_META[cat]
-                const count = products.filter(p => p.category === cat).length
-                const active = selectedCategory === cat
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all text-left ${
-                      active
-                        ? 'bg-orange-50 border-l-4 border-orange-500'
-                        : 'hover:bg-gray-50 border-l-4 border-transparent'
-                    }`}
-                  >
-                    <span className={active ? 'text-orange-600' : 'text-gray-400'}>
-                      {m?.icon ?? <Grid3x3 className="w-6 h-6" />}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-bold text-sm truncate ${active ? 'text-orange-700' : 'text-gray-700'}`}>
-                        {m?.label ?? cat}
-                      </p>
-                      <p className="text-xs text-gray-400">{count} items</p>
-                    </div>
-                    {active && <ChevronRight className="w-4 h-4 text-orange-500 shrink-0" />}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </aside>
-
-        {/* ── Main content ── */}
-        <main className="flex-1 p-4 md:p-8 space-y-8">
-          {selectedCategory && filteredProducts.length > 0 && (
-            <>
-              {/* Section header */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-gray-900">
-                  {meta?.label ?? selectedCategory}
-                </h2>
-                <span className="text-sm text-gray-400 font-medium">{filteredProducts.length} modelos</span>
-              </div>
-
-              {/* Featured / "Modelos Más Cotizados" */}
-              <section>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-1 h-5 bg-orange-500 rounded-full" />
-                  <h3 className="text-sm font-black uppercase tracking-wider text-gray-700">Modelos Más Cotizados</h3>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {featured.map(product => <ProductCard key={product.id} product={product} price={userPrices[product.id] ?? product.base_price} />)}
-                </div>
-              </section>
-
-              {/* Rest */}
-              {rest.length > 0 && (
-                <section>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-1 h-5 bg-gray-300 rounded-full" />
-                    <h3 className="text-sm font-black uppercase tracking-wider text-gray-500">Modelos por Categoría</h3>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {rest.map(product => <ProductCard key={product.id} product={product} price={userPrices[product.id] ?? product.base_price} />)}
-                  </div>
-                </section>
-              )}
-            </>
-          )}
-
-          {selectedCategory && filteredProducts.length === 0 && (
-            <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-16 text-center">
-              <p className="text-gray-400 font-medium">No hay productos en esta categoría</p>
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
-  )
-}
 
 function ProductCard({ product, price }: { product: Product; price: number }) {
-  const priceLabel = product.price_type === 'por_unidad'
-    ? 'por unidad'
-    : product.price_type === 'por_pie_lineal'
-    ? 'por pie lineal'
-    : 'por pie²'
+  const priceLabel = product.price_type === 'por_unidad' ? 'por unidad'
+    : product.price_type === 'por_pie_lineal' ? 'por pie lineal' : 'por pie²'
 
   return (
     <Link
       href={`/dashboard/cotizaciones/nueva?modelo=${product.code}`}
       className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-orange-300 hover:shadow-lg transition-all group"
     >
-      {/* Product render */}
       <div className="relative bg-[#dce8f0] flex items-center justify-center h-48 overflow-hidden">
         <div className="w-full h-full p-3">
-          <ProductVisual
-            category={product.category}
-            code={product.code}
-            name={product.name}
-            className="w-full h-full border-0 shadow-none bg-transparent rounded-none"
-          />
+          <ProductVisual category={product.category} code={product.code} name={product.name}
+            className="w-full h-full border-0 shadow-none bg-transparent rounded-none" />
         </div>
       </div>
-
-      {/* Info */}
       <div className="p-4">
         <p className="text-xs font-black text-orange-600 tracking-wide mb-0.5">{product.code}</p>
-        <p className="text-sm font-bold text-gray-900 leading-snug group-hover:text-orange-700 transition-colors line-clamp-2">
-          {product.name}
-        </p>
+        <p className="text-sm font-bold text-gray-900 leading-snug group-hover:text-orange-700 transition-colors line-clamp-2">{product.name}</p>
         <div className="mt-3 pt-3 border-t border-gray-100 flex items-end justify-between">
           <div>
             <p className="text-lg font-black text-gray-900">{formatUSD(price)}</p>
             <p className="text-xs text-gray-400">{priceLabel}</p>
           </div>
-          <span className="text-xs font-bold text-orange-600 group-hover:gap-2 flex items-center gap-1 transition-all">
+          <span className="text-xs font-bold text-orange-600 flex items-center gap-1">
             Cotizar <ChevronRight className="w-3.5 h-3.5" />
           </span>
         </div>
