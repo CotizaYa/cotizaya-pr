@@ -30,6 +30,7 @@ export default function OnboardingWizard({ initialName }: OnboardingWizardProps)
   const [saving, setSaving] = useState(false)
 
   const [businessName, setBusinessName] = useState(initialName || '')
+  const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
   const [mainCategory, setMainCategory] = useState('')
 
@@ -41,6 +42,7 @@ export default function OnboardingWizard({ initialName }: OnboardingWizardProps)
 
       await supabase.from('profiles').update({
         business_name: businessName || initialName,
+        phone: phone.trim() || null,
         city: city || 'Puerto Rico',
         main_category: mainCategory || 'screen',
         onboarding_completed: true,
@@ -85,6 +87,16 @@ export default function OnboardingWizard({ initialName }: OnboardingWizardProps)
                   placeholder="Ej: Taller Aluminio Pérez"
                   className="w-full h-12 px-4 border-2 border-gray-200 rounded-xl text-base font-medium focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
                   autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Teléfono del negocio</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="(787) 000-0000"
+                  className="w-full h-12 px-4 border-2 border-gray-200 rounded-xl text-base font-medium focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
                 />
               </div>
               <div>

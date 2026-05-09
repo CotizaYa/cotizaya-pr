@@ -48,7 +48,8 @@ export default function DashboardHomeClient({ profile, stats, recentQuotes, prod
   const [showOnboarding, setShowOnboarding] = useState(false)
 
   useEffect(() => {
-    if (profile && profile.onboarding_completed === false) {
+    // Show onboarding if incomplete OR if phone is missing (existing users before this feature)
+    if (profile && (profile.onboarding_completed === false || !profile.phone)) {
       setShowOnboarding(true)
     }
   }, [profile])
