@@ -1,272 +1,215 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect, Suspense, useRef } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, ChevronRight, ChevronLeft, DoorOpen, Wind, Layers, Grid3x3, Warehouse, Wrench, Square } from 'lucide-react'
+import { Loader2, ChevronRight, ChevronLeft, DoorOpen, Wind, Layers, Grid3x3, Warehouse, Wrench, Square, Search } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
 import { ProductVisual } from '@/components/product/ProductVisual'
 
 interface Product {
-  id: string
-  code: string | null
-  name: string
-  category: string
-  price_type: string
-  base_price: number
-  unit_label: string | null
+  id: string; code: string | null; name: string
+  category: string; price_type: string; base_price: number
 }
 
-const MAIN_CATEGORIES = ['screen', 'puerta', 'ventana', 'closet']
+const CAT_ORDER = ['screen', 'puerta', 'ventana', 'closet', 'aluminio', 'cristal', 'tornilleria', 'miscelanea']
 
-const CATEGORY_META: Record<string, { label: string; icon: React.ReactNode; color: string; accent: string }> = {
-  screen:    { label: 'Puertas de Screen',     icon: <Grid3x3 className="w-7 h-7" />,    color: 'bg-teal-50',   accent: 'border-teal-500 text-teal-700' },
-  puerta:    { label: 'Puertas de Aluminio',   icon: <DoorOpen className="w-7 h-7" />,   color: 'bg-blue-50',   accent: 'border-blue-500 text-blue-700' },
-  ventana:   { label: 'Ventanas',              icon: <Wind className="w-7 h-7" />,        color: 'bg-sky-50',    accent: 'border-sky-500 text-sky-700' },
-  closet:    { label: 'Puertas de Closet',     icon: <Layers className="w-7 h-7" />,     color: 'bg-purple-50', accent: 'border-purple-500 text-purple-700' },
-  garaje:    { label: 'Puertas de Garaje',     icon: <Warehouse className="w-7 h-7" />,  color: 'bg-orange-50', accent: 'border-orange-500 text-orange-700' },
-  aluminio:  { label: 'Perfilería',            icon: <Wrench className="w-7 h-7" />,     color: 'bg-gray-50',   accent: 'border-gray-400 text-gray-600' },
-  cristal:   { label: 'Cristalería',           icon: <Square className="w-7 h-7" />,     color: 'bg-cyan-50',   accent: 'border-cyan-500 text-cyan-700' },
-  tornilleria: { label: 'Tornillería',         icon: <Wrench className="w-7 h-7" />,     color: 'bg-zinc-50',   accent: 'border-zinc-400 text-zinc-600' },
-  miscelanea: { label: 'Servicios',            icon: <Wrench className="w-7 h-7" />,     color: 'bg-amber-50',  accent: 'border-amber-500 text-amber-700' },
+const CAT_META: Record<string, { label: string; short: string; icon: React.ReactNode }> = {
+  screen:      { label: 'Puertas de Screen', short: 'Screens',   icon: <Grid3x3 className="w-4 h-4" /> },
+  puerta:      { label: 'Puertas',           short: 'Puertas',   icon: <DoorOpen className="w-4 h-4" /> },
+  ventana:     { label: 'Ventanas',          short: 'Ventanas',  icon: <Wind className="w-4 h-4" /> },
+  closet:      { label: 'Closets',           short: 'Closets',   icon: <Layers className="w-4 h-4" /> },
+  garaje:      { label: 'Garaje',            short: 'Garaje',    icon: <Warehouse className="w-4 h-4" /> },
+  aluminio:    { label: 'Perfilería',        short: 'Perfiles',  icon: <Wrench className="w-4 h-4" /> },
+  cristal:     { label: 'Cristalería',       short: 'Cristal',   icon: <Square className="w-4 h-4" /> },
+  tornilleria: { label: 'Tornillería',       short: 'Tornillos', icon: <Wrench className="w-4 h-4" /> },
+  miscelanea:  { label: 'Servicios',         short: 'Servicios', icon: <Wrench className="w-4 h-4" /> },
 }
 
-function CatalogoDashboardPage() {
+function CatalogoContent() {
   const searchParams = useSearchParams()
   const catParam = searchParams.get('cat')
   const supabase = createClient()
+
   const [products, setProducts] = useState<Product[]>([])
   const [userPrices, setUserPrices] = useState<Record<string, number>>({})
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedCat, setSelectedCat] = useState<string | null>(catParam)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const chipRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const load = async () => {
       try {
-        setLoading(true)
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) { setError('No autenticado'); return }
-
-        const { data: prods, error: pe } = await supabase
-          .from('products')
-          .select('*')
-          .eq('is_active', true)
-          .order('category').order('code')
-
-        if (pe) { setError('Error al cargar catálogo'); return }
-
-        const { data: prices } = await supabase
-          .from('user_prices').select('product_id, price').eq('user_id', user.id)
-
+        if (!user) return
+        const [prodsRes, pricesRes] = await Promise.all([
+          supabase.from('products').select('*').eq('is_active', true).order('category').order('code'),
+          supabase.from('user_prices').select('product_id, price').eq('user_id', user.id),
+        ])
+        const prods = prodsRes.data ?? []
         const pm: Record<string, number> = {}
-        ;(prices ?? []).forEach((p: any) => { pm[p.product_id] = p.price })
-
-        setProducts(prods ?? [])
+        ;(pricesRes.data ?? []).forEach((p: any) => { pm[p.product_id] = p.price })
+        setProducts(prods)
         setUserPrices(pm)
-
-        // Default to first main category available
-        const firstMain = MAIN_CATEGORIES.find(c => (prods ?? []).some(p => p.category === c))
-        setSelectedCategory(catParam ?? firstMain ?? (prods?.[0]?.category ?? null))
-      } catch { setError('Error al cargar catálogo') }
-      finally { setLoading(false) }
+        if (!selectedCat) {
+          const firstCat = CAT_ORDER.find(c => prods.some(p => p.category === c)) ?? prods[0]?.category
+          setSelectedCat(catParam ?? firstCat ?? null)
+        }
+      } finally { setLoading(false) }
     }
     load()
   }, [supabase])
 
+  useEffect(() => {
+    if (!chipRef.current || !selectedCat) return
+    const active = chipRef.current.querySelector('[data-active="true"]') as HTMLElement
+    if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [selectedCat, loading])
+
   if (loading) return (
-    <div className="flex items-center justify-center h-screen">
-      <Loader2 className="w-10 h-10 text-orange-600 animate-spin" />
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
     </div>
   )
 
-  if (error) return (
-    <div className="p-8 text-center">
-      <p className="text-red-600 font-bold">{error}</p>
-    </div>
-  )
+  const sortedCats = Array.from(new Set(products.map(p => p.category)))
+    .sort((a, b) => {
+      const ai = CAT_ORDER.indexOf(a), bi = CAT_ORDER.indexOf(b)
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+    })
 
-  const categories = Array.from(new Set(products.map(p => p.category)))
-  const mainCats = categories.filter(c => MAIN_CATEGORIES.includes(c))
-  const otherCats = categories.filter(c => !MAIN_CATEGORIES.includes(c))
-
-  const filteredProducts = selectedCategory ? products.filter(p => p.category === selectedCategory) : []
-  // "Most quoted" = first 4 products in selected category
-  const featured = filteredProducts.slice(0, 4)
-  const rest = filteredProducts.slice(4)
-
-  const meta = selectedCategory ? CATEGORY_META[selectedCategory] : null
+  const displayed = selectedCat ? products.filter(p => p.category === selectedCat) : products
+  const filtered = search.length > 1
+    ? displayed.filter(p =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        (p.code ?? '').toLowerCase().includes(search.toLowerCase())
+      )
+    : displayed
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-4">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+
+      {/* HEADER sticky */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-20">
+        {/* Search row */}
+        <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+          <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-xl shrink-0 transition-colors">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           </Link>
-          <div>
-            <h1 className="text-xl md:text-2xl font-black text-gray-900">Catálogo</h1>
-            <p className="text-gray-400 text-xs mt-0.5">{products.length} modelos disponibles</p>
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={`Buscar en ${CAT_META[selectedCat ?? '']?.label ?? 'catálogo'}...`}
+              className="w-full h-9 pl-9 pr-3 bg-gray-100 rounded-xl text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-orange-300 transition-all"
+            />
           </div>
         </div>
-      </div>
 
-      {/* ── MOBILE: chips horizontales arriba ── */}
-      <div className="md:hidden bg-white border-b border-gray-100">
-        <div className="flex gap-2 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: 'none' }}>
-          {[...mainCats, ...otherCats].map(cat => {
-            const m = CATEGORY_META[cat]
-            const active = selectedCategory === cat
+        {/* Category chips */}
+        <div
+          ref={chipRef}
+          className="flex gap-2 overflow-x-auto px-3 pb-3"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {sortedCats.map(cat => {
+            const m = CAT_META[cat]
+            const active = selectedCat === cat
+            const count = products.filter(p => p.category === cat).length
             return (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold transition-all shrink-0 ${
-                  active ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 text-gray-600'
+                data-active={active}
+                onClick={() => { setSelectedCat(cat); setSearch('') }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-bold transition-all shrink-0 ${
+                  active
+                    ? 'bg-orange-500 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
-                <span className="w-4 h-4 shrink-0">{m?.icon}</span>
-                {m?.label ?? cat}
+                <span>{m?.icon}</span>
+                <span>{m?.short ?? cat}</span>
+                <span className={`font-black ${active ? 'opacity-70' : 'text-gray-400'}`}>{count}</span>
               </button>
             )
           })}
         </div>
       </div>
 
-      {/* ── MOBILE: grid directo ── */}
-      <div className="md:hidden p-4 pb-24 space-y-4">
-        {selectedCategory && filteredProducts.length > 0 ? (
-          <>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-black text-gray-700">{meta?.label ?? selectedCategory}</p>
-              <span className="text-xs text-gray-400">{filteredProducts.length} modelos</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} price={userPrices[product.id] ?? product.base_price} />
-              ))}
-            </div>
-          </>
+      {/* GRID */}
+      <div className="flex-1 p-3 pb-28 md:pb-8">
+        {!search && filtered.length > 0 && (
+          <p className="text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2.5 px-0.5">
+            {CAT_META[selectedCat ?? '']?.label ?? selectedCat} · {filtered.length} modelos
+          </p>
+        )}
+
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Grid3x3 className="w-10 h-10 text-gray-200 mb-3" />
+            <p className="text-gray-400 text-sm text-center">
+              {search ? `Sin resultados para "${search}"` : 'Sin productos'}
+            </p>
+            {search && (
+              <button onClick={() => setSearch('')} className="mt-3 text-xs text-orange-500 font-bold">
+                Limpiar búsqueda
+              </button>
+            )}
+          </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-sm text-gray-400">Selecciona una categoría arriba</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
+            {filtered.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                price={userPrices[product.id] ?? product.base_price}
+              />
+            ))}
           </div>
         )}
-      </div>
-
-      {/* ── DESKTOP: sidebar + main ── */}
-      <div className="hidden md:flex">
-        <aside className="w-64 bg-white border-r border-gray-100 min-h-screen shrink-0">
-          {mainCats.length > 0 && (
-            <div className="p-4">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3 px-2">Productos</p>
-              {mainCats.map(cat => {
-                const m = CATEGORY_META[cat]
-                const count = products.filter(p => p.category === cat).length
-                const active = selectedCategory === cat
-                return (
-                  <button key={cat} onClick={() => setSelectedCategory(cat)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all text-left ${active ? 'bg-orange-50 border-l-4 border-orange-500' : 'hover:bg-gray-50 border-l-4 border-transparent'}`}>
-                    <span className={active ? 'text-orange-600' : 'text-gray-400'}>{m?.icon ?? <Grid3x3 className="w-6 h-6" />}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-bold text-sm truncate ${active ? 'text-orange-700' : 'text-gray-700'}`}>{m?.label ?? cat}</p>
-                      <p className="text-xs text-gray-400">{count} modelos</p>
-                    </div>
-                    {active && <ChevronRight className="w-4 h-4 text-orange-500 shrink-0" />}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-          {otherCats.length > 0 && (
-            <div className="p-4 border-t border-gray-100">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3 px-2">Materiales</p>
-              {otherCats.map(cat => {
-                const m = CATEGORY_META[cat]
-                const count = products.filter(p => p.category === cat).length
-                const active = selectedCategory === cat
-                return (
-                  <button key={cat} onClick={() => setSelectedCategory(cat)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all text-left ${active ? 'bg-orange-50 border-l-4 border-orange-500' : 'hover:bg-gray-50 border-l-4 border-transparent'}`}>
-                    <span className={active ? 'text-orange-600' : 'text-gray-400'}>{m?.icon ?? <Grid3x3 className="w-6 h-6" />}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-bold text-sm truncate ${active ? 'text-orange-700' : 'text-gray-700'}`}>{m?.label ?? cat}</p>
-                      <p className="text-xs text-gray-400">{count} items</p>
-                    </div>
-                    {active && <ChevronRight className="w-4 h-4 text-orange-500 shrink-0" />}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </aside>
-        <main className="flex-1 p-8 space-y-8">
-          {selectedCategory && filteredProducts.length > 0 && (
-            <>
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-gray-900">{meta?.label ?? selectedCategory}</h2>
-                <span className="text-sm text-gray-400">{filteredProducts.length} modelos</span>
-              </div>
-              <section>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-1 h-5 bg-orange-500 rounded-full" />
-                  <h3 className="text-sm font-black uppercase tracking-wider text-gray-700">Modelos Más Cotizados</h3>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {featured.map(product => <ProductCard key={product.id} product={product} price={userPrices[product.id] ?? product.base_price} />)}
-                </div>
-              </section>
-              {rest.length > 0 && (
-                <section>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-1 h-5 bg-gray-300 rounded-full" />
-                    <h3 className="text-sm font-black uppercase tracking-wider text-gray-500">Todos los Modelos</h3>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {rest.map(product => <ProductCard key={product.id} product={product} price={userPrices[product.id] ?? product.base_price} />)}
-                  </div>
-                </section>
-              )}
-            </>
-          )}
-          {selectedCategory && filteredProducts.length === 0 && (
-            <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-16 text-center">
-              <p className="text-gray-400 font-medium">No hay productos en esta categoría</p>
-            </div>
-          )}
-        </main>
       </div>
     </div>
   )
 }
 
 function ProductCard({ product, price }: { product: Product; price: number }) {
-  const priceLabel = product.price_type === 'por_unidad' ? 'por unidad'
-    : product.price_type === 'por_pie_lineal' ? 'por pie lineal' : 'por pie²'
+  const unit = product.price_type === 'por_unidad' ? 'und'
+    : product.price_type === 'por_pie_lineal' ? 'pie' : 'pie²'
 
   return (
     <Link
       href={`/dashboard/cotizaciones/nueva?modelo=${product.code}`}
-      className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-orange-300 hover:shadow-lg transition-all group"
+      className="bg-white rounded-2xl border border-gray-100 overflow-hidden active:scale-95 transition-all hover:border-orange-300 hover:shadow-md group flex flex-col"
     >
-      <div className="relative bg-[#dce8f0] flex items-center justify-center h-48 overflow-hidden">
-        <div className="w-full h-full p-3">
-          <ProductVisual category={product.category} code={product.code} name={product.name}
-            className="w-full h-full border-0 shadow-none bg-transparent rounded-none" />
-        </div>
+      {/* Compact image */}
+      <div className="bg-[#eaf1f7] flex items-center justify-center h-28 md:h-36 overflow-hidden shrink-0">
+        <ProductVisual
+          category={product.category}
+          code={product.code}
+          name={product.name}
+          className="w-full h-full border-0 shadow-none bg-transparent rounded-none"
+        />
       </div>
-      <div className="p-4">
-        <p className="text-xs font-black text-orange-600 tracking-wide mb-0.5">{product.code}</p>
-        <p className="text-sm font-bold text-gray-900 leading-snug group-hover:text-orange-700 transition-colors line-clamp-2">{product.name}</p>
-        <div className="mt-3 pt-3 border-t border-gray-100 flex items-end justify-between">
+
+      {/* Info */}
+      <div className="p-2.5 flex flex-col flex-1 min-h-0">
+        <p className="text-[9px] font-black text-orange-500 tracking-widest uppercase leading-none mb-1">
+          {product.code}
+        </p>
+        <p className="text-[11px] font-bold text-gray-900 leading-tight line-clamp-2 flex-1">
+          {product.name}
+        </p>
+        <div className="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between">
           <div>
-            <p className="text-lg font-black text-gray-900">{formatUSD(price)}</p>
-            <p className="text-xs text-gray-400">{priceLabel}</p>
+            <p className="text-sm font-black text-gray-900 leading-none">{formatUSD(price)}</p>
+            <p className="text-[9px] text-gray-400 mt-0.5">/{unit}</p>
           </div>
-          <span className="text-xs font-bold text-orange-600 flex items-center gap-1">
-            Cotizar <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-[10px] font-black text-orange-500 flex items-center gap-0.5 group-hover:gap-1 transition-all">
+            Cotizar<ChevronRight className="w-2.5 h-2.5" />
           </span>
         </div>
       </div>
@@ -276,8 +219,12 @@ function ProductCard({ product, price }: { product: Product; price: number }) {
 
 export default function CatalogoPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="w-10 h-10 text-orange-600 animate-spin" /></div>}>
-      <CatalogoDashboardPage />
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
+      </div>
+    }>
+      <CatalogoContent />
     </Suspense>
   )
 }
