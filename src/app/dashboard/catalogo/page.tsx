@@ -186,10 +186,7 @@ function CatalogoContent() {
                     {CAT_META[selectedCat ?? '']?.label ?? selectedCat} · {filteredMain.length}
                   </p>
                 )}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                  {filteredMain.map(p => (
-                    <ProductCard key={p.id} product={p} price={userPrices[p.id] ?? p.base_price} />
-                  ))}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                 </div>
               </div>
             )}
@@ -200,7 +197,7 @@ function CatalogoContent() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 px-0.5">
                   Materiales y Accesorios · {filteredAccessories.length}
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                   {filteredAccessories.map(p => (
                     <ProductCard key={p.id} product={p} price={userPrices[p.id] ?? p.base_price} />
                   ))}
@@ -226,9 +223,8 @@ function ProductCard({ product, price }: { product: Product; price: number }) {
       href={`/dashboard/cotizaciones/nueva?modelo=${product.code}`}
       className="bg-white rounded-2xl border border-gray-100 overflow-hidden active:scale-95 transition-transform hover:border-orange-400 hover:shadow-md group flex flex-col"
     >
-      {/* Image area — fixed height, contains SVG render */}
-      <div className="relative bg-[#eaf1f7] overflow-hidden" style={{ paddingBottom: '120%' }}>
-        <div className="absolute inset-0 flex items-center justify-center p-2">
+      <div className="bg-[#eaf1f7] overflow-hidden" style={{ height: '160px' }}>
+        <div style={{ width: '100%', height: '100%' }}>
           {svgRender}
         </div>
       </div>

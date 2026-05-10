@@ -18,9 +18,17 @@ interface Fabricante {
 }
 
 const PUERTO_RICO_CITIES = [
-  'San Juan', 'Bayamón', 'Carolina', 'Caguas', 'Ponce', 'Mayagüez',
-  'Arecibo', 'Guaynabo', 'Toa Baja', 'Humacao', 'Aguadilla', 'Yauco',
-  'Vega Baja', 'Salinas', 'Juana Díaz', 'Fajardo', 'Ceiba', 'Luquillo',
+  'Adjuntas','Aguada','Aguadilla','Aguas Buenas','Aibonito','Añasco','Arecibo',
+  'Arroyo','Barceloneta','Barranquitas','Bayamón','Cabo Rojo','Caguas','Camuy',
+  'Canóvanas','Carolina','Cataño','Cayey','Ceiba','Ciales','Cidra','Coamo',
+  'Comerío','Corozal','Culebra','Dorado','Fajardo','Florida','Guánica','Guayama',
+  'Guayanilla','Guaynabo','Gurabo','Hatillo','Hormigueros','Humacao','Isabela',
+  'Jayuya','Juana Díaz','Juncos','Lajas','Lares','Las Marías','Las Piedras',
+  'Loíza','Luquillo','Manatí','Maricao','Maunabo','Mayagüez','Moca','Morovis',
+  'Naguabo','Naranjito','Orocovis','Patillas','Peñuelas','Ponce','Quebradillas',
+  'Rincón','Río Grande','Sabana Grande','Salinas','San Germán','San Juan',
+  'San Lorenzo','San Sebastián','Santa Isabel','Toa Alta','Toa Baja','Trujillo Alto',
+  'Utuado','Vega Alta','Vega Baja','Vieques','Villalba','Yabucoa','Yauco',
 ]
 
 export default function BuscarFabricantesPublicoPage() {
@@ -74,9 +82,8 @@ export default function BuscarFabricantesPublicoPage() {
     <main className="min-h-screen bg-[#f8fafc]">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-600 text-base font-black text-white">C</div>
-            <span className="text-lg font-black text-slate-950">CotizaYa</span>
+          <Link href="/" className="flex items-center">
+            <img src="/logo-cotizaya.png" alt="CotizaYa PR" className="h-9 w-auto object-contain" />
           </Link>
           <nav className="flex items-center gap-3">
             <Link href="/catalogo" className="hidden text-sm font-bold text-slate-600 hover:text-slate-950 sm:inline-flex">Catálogo</Link>
