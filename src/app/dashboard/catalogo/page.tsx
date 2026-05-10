@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, ChevronRight, ChevronLeft, DoorOpen, Wind, Layers, Grid3x3, Warehouse, Wrench, Square } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
@@ -31,7 +32,9 @@ const CATEGORY_META: Record<string, { label: string; icon: React.ReactNode; colo
   miscelanea: { label: 'Servicios',            icon: <Wrench className="w-7 h-7" />,     color: 'bg-amber-50',  accent: 'border-amber-500 text-amber-700' },
 }
 
-export default function CatalogoDashboardPage() {
+function CatalogoDashboardPage() {
+  const searchParams = useSearchParams()
+  const catParam = searchParams.get('cat')
   const supabase = createClient()
   const [products, setProducts] = useState<Product[]>([])
   const [userPrices, setUserPrices] = useState<Record<string, number>>({})
@@ -65,7 +68,7 @@ export default function CatalogoDashboardPage() {
 
         // Default to first main category available
         const firstMain = MAIN_CATEGORIES.find(c => (prods ?? []).some(p => p.category === c))
-        setSelectedCategory(firstMain ?? (prods?.[0]?.category ?? null))
+        setSelectedCategory(catParam ?? firstMain ?? (prods?.[0]?.category ?? null))
       } catch { setError('Error al cargar catálogo') }
       finally { setLoading(false) }
     }
@@ -268,5 +271,13 @@ function ProductCard({ product, price }: { product: Product; price: number }) {
         </div>
       </div>
     </Link>
+  )
+}
+
+export default function CatalogoPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="w-10 h-10 text-orange-600 animate-spin" /></div>}>
+      <CatalogoDashboardPage />
+    </Suspense>
   )
 }

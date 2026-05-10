@@ -208,9 +208,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center justify-around h-16">
             {[
               { href: '/dashboard', icon: Home, label: 'Inicio', exact: true },
-              { href: '/dashboard/cotizaciones', icon: FileText, label: 'Cotizar' },
-              { href: '/dashboard/corte', icon: Scissors, label: 'Corte' },
-              { href: '/dashboard/calendario', icon: Calendar, label: 'Producción' },
+              { href: '/dashboard/cotizaciones/nueva', icon: Plus, label: 'Cotizar' },
+              { href: '/dashboard/catalogo', icon: Grid3x3, label: 'Catálogo' },
+              { href: '/dashboard/clientes', icon: Users, label: 'Clientes' },
               { href: '/dashboard/perfil', icon: Settings, label: 'Ajustes' },
             ].map((item) => {
               const active = isActive(item.href, item.exact)

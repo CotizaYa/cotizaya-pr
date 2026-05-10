@@ -37,10 +37,10 @@ const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 
 const QUICK_CATS = [
-  { label: 'Screens',  href: '/dashboard/cotizaciones/nueva', icon: <Grid3x3 className="w-5 h-5" />,  color: 'bg-teal-50 text-teal-700 border-teal-200' },
-  { label: 'Puertas',  href: '/dashboard/cotizaciones/nueva', icon: <DoorOpen className="w-5 h-5" />, color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { label: 'Ventanas', href: '/dashboard/cotizaciones/nueva', icon: <Wind className="w-5 h-5" />,     color: 'bg-sky-50 text-sky-700 border-sky-200' },
-  { label: 'Closets',  href: '/dashboard/cotizaciones/nueva', icon: <Layers className="w-5 h-5" />,   color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { label: 'Screens',  href: '/dashboard/catalogo?cat=screen',  icon: <Grid3x3 className="w-5 h-5" />,  color: 'bg-teal-50 text-teal-700 border-teal-200' },
+  { label: 'Puertas',  href: '/dashboard/catalogo?cat=puerta',  icon: <DoorOpen className="w-5 h-5" />, color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { label: 'Ventanas', href: '/dashboard/catalogo?cat=ventana', icon: <Wind className="w-5 h-5" />,     color: 'bg-sky-50 text-sky-700 border-sky-200' },
+  { label: 'Closets',  href: '/dashboard/catalogo?cat=closet',  icon: <Layers className="w-5 h-5" />,   color: 'bg-purple-50 text-purple-700 border-purple-200' },
 ]
 
 export default function DashboardHomeClient({ profile, stats, recentQuotes, productionEvents }: Props) {
