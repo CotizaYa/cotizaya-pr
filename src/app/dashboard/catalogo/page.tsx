@@ -104,8 +104,9 @@ function CatalogoContent() {
   const totalVisible = filteredMain.length + filteredAccessories.length
 
   return (
-    // overflow-x-hidden is critical: prevents chip scrollbar from widening the page on iOS
-    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
+    // overflow-x must NOT be on the page container - it clips the right grid column on iOS
+    // Instead, wrap only the chips in an overflow-hidden container
+    <div className="min-h-screen bg-gray-50 flex flex-col w-full">
 
       {/* STICKY HEADER */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-20 w-full">
@@ -127,33 +128,37 @@ function CatalogoContent() {
           </div>
         </div>
 
-        {/* Category chips — contained scroll, doesn't widen page */}
-        <div
-          ref={chipScrollRef}
-          className="flex gap-2 px-3 pb-3 overflow-x-auto overflow-y-hidden"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {sortedCats.map(cat => {
-            const m = CAT_META[cat]
-            const active = selectedCat === cat
-            const count = products.filter(p => p.category === cat).length
-            return (
-              <button
-                key={cat}
-                data-active={active}
-                onClick={() => { setSelectedCat(cat); setSearch('') }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-bold transition-all shrink-0 ${
-                  active
-                    ? 'bg-orange-500 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                {m?.icon}
-                <span>{m?.short ?? cat}</span>
-                <span className={`font-black ${active ? 'opacity-70' : 'text-gray-400'}`}>{count}</span>
-              </button>
-            )
-          })}
+        {/* overflow-hidden on THIS wrapper prevents iOS Safari from making the page scrollable
+            while still allowing the inner div to scroll horizontally */}
+        <div className="overflow-hidden">
+          <div
+            ref={chipScrollRef}
+            ref={chipScrollRef}
+            className="flex gap-2 px-3 pb-3 overflow-x-auto overflow-y-hidden"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {sortedCats.map(cat => {
+              const m = CAT_META[cat]
+              const active = selectedCat === cat
+              const count = products.filter(p => p.category === cat).length
+              return (
+                <button
+                  key={cat}
+                  data-active={active}
+                  onClick={() => { setSelectedCat(cat); setSearch('') }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-bold transition-all shrink-0 ${
+                    active
+                      ? 'bg-orange-500 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {m?.icon}
+                  <span>{m?.short ?? cat}</span>
+                  <span className={`font-black ${active ? 'opacity-70' : 'text-gray-400'}`}>{count}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 
