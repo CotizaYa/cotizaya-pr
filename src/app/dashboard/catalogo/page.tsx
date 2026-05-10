@@ -187,6 +187,9 @@ function CatalogoContent() {
                   </p>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                  {filteredMain.map(p => (
+                    <ProductCard key={p.id} product={p} price={userPrices[p.id] ?? p.base_price} />
+                  ))}
                 </div>
               </div>
             )}
