@@ -335,7 +335,7 @@ function GlassRender() {
 }
 
 // ── Router ────────────────────────────────────────────────────────────────────
-function renderByCode(code: string | null, category: string | null) {
+export function renderByCode(code: string | null, category: string | null) {
   const c = (code ?? '').toUpperCase()
   const cat = (category ?? '').toLowerCase()
 

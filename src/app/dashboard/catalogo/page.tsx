@@ -4,9 +4,9 @@ import React, { useState, useEffect, Suspense, useRef } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, ChevronRight, ChevronLeft, DoorOpen, Wind, Layers, Grid3x3, Warehouse, Wrench, Square, Search } from 'lucide-react'
+import { Loader2, ChevronRight, ChevronLeft, DoorOpen, Wind, Layers, Grid3x3, Wrench, Square, Search } from 'lucide-react'
 import { formatUSD } from '@/lib/calculations'
-import { ProductVisual } from '@/components/product/ProductVisual'
+import { renderByCode } from '@/components/product/ProductVisual'
 
 interface Product {
   id: string; code: string | null; name: string
@@ -20,12 +20,14 @@ const CAT_META: Record<string, { label: string; short: string; icon: React.React
   puerta:      { label: 'Puertas',           short: 'Puertas',   icon: <DoorOpen className="w-4 h-4" /> },
   ventana:     { label: 'Ventanas',          short: 'Ventanas',  icon: <Wind className="w-4 h-4" /> },
   closet:      { label: 'Closets',           short: 'Closets',   icon: <Layers className="w-4 h-4" /> },
-  garaje:      { label: 'Garaje',            short: 'Garaje',    icon: <Warehouse className="w-4 h-4" /> },
   aluminio:    { label: 'Perfilería',        short: 'Perfiles',  icon: <Wrench className="w-4 h-4" /> },
   cristal:     { label: 'Cristalería',       short: 'Cristal',   icon: <Square className="w-4 h-4" /> },
   tornilleria: { label: 'Tornillería',       short: 'Tornillos', icon: <Wrench className="w-4 h-4" /> },
   miscelanea:  { label: 'Servicios',         short: 'Servicios', icon: <Wrench className="w-4 h-4" /> },
 }
+
+// Screen accessories that should show under a separate "Materiales" sub-section
+const SCREEN_ACCESSORIES = new Set(['S004','S005','S006','S007','S008','S009'])
 
 function CatalogoContent() {
   const searchParams = useSearchParams()
@@ -37,7 +39,7 @@ function CatalogoContent() {
   const [selectedCat, setSelectedCat] = useState<string | null>(catParam)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const chipRef = useRef<HTMLDivElement>(null)
+  const chipScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -54,18 +56,19 @@ function CatalogoContent() {
         setProducts(prods)
         setUserPrices(pm)
         if (!selectedCat) {
-          const firstCat = CAT_ORDER.find(c => prods.some(p => p.category === c)) ?? prods[0]?.category
-          setSelectedCat(catParam ?? firstCat ?? null)
+          const first = CAT_ORDER.find(c => prods.some(p => p.category === c)) ?? prods[0]?.category
+          setSelectedCat(catParam ?? first ?? null)
         }
       } finally { setLoading(false) }
     }
     load()
   }, [supabase])
 
+  // Scroll active chip to center after data loads
   useEffect(() => {
-    if (!chipRef.current || !selectedCat) return
-    const active = chipRef.current.querySelector('[data-active="true"]') as HTMLElement
-    if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    if (!chipScrollRef.current || !selectedCat) return
+    const el = chipScrollRef.current.querySelector('[data-active="true"]') as HTMLElement
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
   }, [selectedCat, loading])
 
   if (loading) return (
@@ -80,25 +83,39 @@ function CatalogoContent() {
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
     })
 
-  const displayed = selectedCat ? products.filter(p => p.category === selectedCat) : products
-  const filtered = search.length > 1
-    ? displayed.filter(p =>
+  // For screen category: split into main models vs accessories
+  const allInCat = selectedCat ? products.filter(p => p.category === selectedCat) : products
+  const mainProducts = selectedCat === 'screen'
+    ? allInCat.filter(p => !SCREEN_ACCESSORIES.has(p.code ?? ''))
+    : allInCat
+  const accessoryProducts = selectedCat === 'screen'
+    ? allInCat.filter(p => SCREEN_ACCESSORIES.has(p.code ?? ''))
+    : []
+
+  const filterFn = (list: Product[]) => search.length > 1
+    ? list.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         (p.code ?? '').toLowerCase().includes(search.toLowerCase())
       )
-    : displayed
+    : list
+
+  const filteredMain = filterFn(mainProducts)
+  const filteredAccessories = filterFn(accessoryProducts)
+  const totalVisible = filteredMain.length + filteredAccessories.length
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    // overflow-x-hidden is critical: prevents chip scrollbar from widening the page on iOS
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
 
-      {/* HEADER sticky */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-20">
-        {/* Search row */}
+      {/* STICKY HEADER */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-20 w-full">
+
+        {/* Search bar + back */}
         <div className="flex items-center gap-2 px-3 pt-3 pb-2">
           <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-xl shrink-0 transition-colors">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           </Link>
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input
               type="text"
@@ -110,11 +127,11 @@ function CatalogoContent() {
           </div>
         </div>
 
-        {/* Category chips */}
+        {/* Category chips — contained scroll, doesn't widen page */}
         <div
-          ref={chipRef}
-          className="flex gap-2 overflow-x-auto px-3 pb-3"
-          style={{ scrollbarWidth: 'none' }}
+          ref={chipScrollRef}
+          className="flex gap-2 px-3 pb-3 overflow-x-auto overflow-y-hidden"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {sortedCats.map(cat => {
             const m = CAT_META[cat]
@@ -131,7 +148,7 @@ function CatalogoContent() {
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
-                <span>{m?.icon}</span>
+                {m?.icon}
                 <span>{m?.short ?? cat}</span>
                 <span className={`font-black ${active ? 'opacity-70' : 'text-gray-400'}`}>{count}</span>
               </button>
@@ -140,15 +157,10 @@ function CatalogoContent() {
         </div>
       </div>
 
-      {/* GRID */}
-      <div className="flex-1 p-3 pb-28 md:pb-8">
-        {!search && filtered.length > 0 && (
-          <p className="text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2.5 px-0.5">
-            {CAT_META[selectedCat ?? '']?.label ?? selectedCat} · {filtered.length} modelos
-          </p>
-        )}
+      {/* PRODUCT GRID */}
+      <div className="flex-1 px-3 pt-3 pb-28 md:pb-8 w-full">
 
-        {filtered.length === 0 ? (
+        {totalVisible === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Grid3x3 className="w-10 h-10 text-gray-200 mb-3" />
             <p className="text-gray-400 text-sm text-center">
@@ -161,15 +173,37 @@ function CatalogoContent() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
-            {filtered.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                price={userPrices[product.id] ?? product.base_price}
-              />
-            ))}
-          </div>
+          <>
+            {/* Main models */}
+            {filteredMain.length > 0 && (
+              <div className="mb-4">
+                {!search && (
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 px-0.5">
+                    {CAT_META[selectedCat ?? '']?.label ?? selectedCat} · {filteredMain.length}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                  {filteredMain.map(p => (
+                    <ProductCard key={p.id} product={p} price={userPrices[p.id] ?? p.base_price} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Screen accessories sub-section */}
+            {filteredAccessories.length > 0 && (
+              <div className="mt-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 px-0.5">
+                  Materiales y Accesorios · {filteredAccessories.length}
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                  {filteredAccessories.map(p => (
+                    <ProductCard key={p.id} product={p} price={userPrices[p.id] ?? p.base_price} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -178,32 +212,32 @@ function CatalogoContent() {
 
 function ProductCard({ product, price }: { product: Product; price: number }) {
   const unit = product.price_type === 'por_unidad' ? 'und'
-    : product.price_type === 'por_pie_lineal' ? 'pie' : 'pie²'
+    : product.price_type === 'por_pie_lineal' ? 'pie lineal' : 'pie²'
+
+  // Render SVG directly — bypasses ProductVisual wrapper's fixed h-44 that breaks layout
+  const svgRender = renderByCode(product.code, product.category)
 
   return (
     <Link
       href={`/dashboard/cotizaciones/nueva?modelo=${product.code}`}
-      className="bg-white rounded-2xl border border-gray-100 overflow-hidden active:scale-95 transition-all hover:border-orange-300 hover:shadow-md group flex flex-col"
+      className="bg-white rounded-2xl border border-gray-100 overflow-hidden active:scale-95 transition-transform hover:border-orange-400 hover:shadow-md group flex flex-col"
     >
-      {/* Compact image */}
-      <div className="bg-[#eaf1f7] flex items-center justify-center h-28 md:h-36 overflow-hidden shrink-0">
-        <ProductVisual
-          category={product.category}
-          code={product.code}
-          name={product.name}
-          className="w-full h-full border-0 shadow-none bg-transparent rounded-none"
-        />
+      {/* Image area — fixed height, contains SVG render */}
+      <div className="relative bg-[#eaf1f7] overflow-hidden" style={{ paddingBottom: '120%' }}>
+        <div className="absolute inset-0 flex items-center justify-center p-2">
+          {svgRender}
+        </div>
       </div>
 
       {/* Info */}
-      <div className="p-2.5 flex flex-col flex-1 min-h-0">
+      <div className="p-2.5 flex flex-col flex-1">
         <p className="text-[9px] font-black text-orange-500 tracking-widest uppercase leading-none mb-1">
           {product.code}
         </p>
         <p className="text-[11px] font-bold text-gray-900 leading-tight line-clamp-2 flex-1">
           {product.name}
         </p>
-        <div className="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between">
+        <div className="mt-1.5 pt-1.5 border-t border-gray-100 flex items-end justify-between">
           <div>
             <p className="text-sm font-black text-gray-900 leading-none">{formatUSD(price)}</p>
             <p className="text-[9px] text-gray-400 mt-0.5">/{unit}</p>
