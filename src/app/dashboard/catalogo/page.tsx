@@ -133,7 +133,6 @@ function CatalogoContent() {
         <div className="overflow-hidden">
           <div
             ref={chipScrollRef}
-            ref={chipScrollRef}
             className="flex gap-2 px-3 pb-3 overflow-x-auto overflow-y-hidden"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
